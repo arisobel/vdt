@@ -102,6 +102,7 @@ db.define_table('media_video',
                 Field('duracao', requires=IS_IN_SET([("5","Até 5"),("15","entre 5 e 15"),("35","entre 15 e 35"),("36","Maior que 35")]), default="5"),
                 Field('minutes', 'integer'),
                 Field('criado_por', 'integer', label="user", default=auth.user_id),
+                Field('editor_responsavel', 'reference auth_user', label="Editor Responsável"),
                 )
 
 db.media_video._after_update.append(lambda s, f: atualiza_tags(s, f))

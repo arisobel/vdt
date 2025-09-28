@@ -268,6 +268,12 @@
                                         <i class="bi bi-tag-fill"></i> {{=video['categoria']['nome']}}
                                     </div>
                                 {{pass}}
+                                
+                                {{if video.get('auth_user') and video['auth_user']['nome']:}}
+                                    <div style="font-size: 11px; color: #007bff; margin-top: 2px;">
+                                        <i class="bi bi-pencil-square"></i> {{=video['auth_user']['nome']}}
+                                    </div>
+                                {{pass}}
                             </div>
                         {{pass}}
                     {{else:}}
@@ -342,6 +348,16 @@
                             <option value="">Selecione um palestrante</option>
                             {{for palestrante in palestrantes:}}
                                 <option value="{{=palestrante.id}}">{{=palestrante.nome}}</option>  
+                            {{pass}}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardEditor">Editor Responsável</label>
+                        <select class="form-control" id="cardEditor" name="editor_responsavel">
+                            <option value="">Selecione um editor</option>
+                            {{for editor in editores:}}
+                                <option value="{{=editor.id}}">{{=editor.nome}}</option>  
                             {{pass}}
                         </select>
                     </div>
@@ -470,6 +486,7 @@ function editCard(videoId) {
                 $('#cardType').val(response.data.tipo_media);
                 $('#cardCategory').val(response.data.categoria);
                 $('#cardSpeaker').val(response.data.palestrante);
+                $('#cardEditor').val(response.data.editor_responsavel);
                 $('#cardLink').val(response.data.link);
                 $('#selectedStatus').val(response.data.aprovacao);
                 
@@ -510,6 +527,7 @@ function updateCard() {
         tipo_media: $('#cardType').val(),
         categoria: $('#cardCategory').val(),
         palestrante: $('#cardSpeaker').val(),
+        editor_responsavel: $('#cardEditor').val(),
         link: $('#cardLink').val(),
         aprovacao: $('#selectedStatus').val()
     };
@@ -564,6 +582,7 @@ function addNewCard() {
         tipo_media: $('#cardType').val(),
         categoria: $('#cardCategory').val(),
         palestrante: $('#cardSpeaker').val(),
+        editor_responsavel: $('#cardEditor').val(),
         link: $('#cardLink').val(),
         aprovacao: $('#selectedStatus').val()
     };

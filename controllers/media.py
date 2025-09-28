@@ -626,15 +626,18 @@ def kanban():
         db.media_video.aprovacao,
         db.media_video.tipo_media,
         db.media_video.lancado,
+        db.media_video.editor_responsavel,
         db.palestrante.nome,
-        db.categoria.nome
+        db.categoria.nome,
+        db.auth_user.nome
     ]
     
     videos = db(db.media_video.id > 0).select(
         *campos,
         left=[
             db.palestrante.on(db.media_video.palestrante == db.palestrante.id),
-            db.categoria.on(db.media_video.categoria == db.categoria.id)
+            db.categoria.on(db.media_video.categoria == db.categoria.id),
+            db.auth_user.on(db.media_video.editor_responsavel == db.auth_user.id)
         ],
         orderby=db.media_video.lancado
     )
@@ -656,9 +659,11 @@ def kanban():
     
     tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
     
-    # Get categories and speakers for the add card form
+    # Get categories, speakers and editors for the add/edit card form
     categorias = db(db.categoria.id > 0).select(db.categoria.id, db.categoria.nome, orderby=db.categoria.nome)
     palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
+    # Get only users who are editors (editores = True)
+    editores = db(db.auth_user.editores == True).select(db.auth_user.id, db.auth_user.nome, orderby=db.auth_user.nome)
     
     # Group videos by approval status
     kanban_data = {}
@@ -674,7 +679,7 @@ def kanban():
             kanban_data[status]['videos'].append(video)
     
     return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media, 
-                categorias=categorias, palestrantes=palestrantes)
+                categorias=categorias, palestrantes=palestrantes, editores=editores)
 
 @auth.requires_login()
 def kanban_update():
@@ -740,7 +745,8 @@ def kanban_get_card():
             db.media_video.categoria,
             db.media_video.palestrante,
             db.media_video.link,
-            db.media_video.aprovacao
+            db.media_video.aprovacao,
+            db.media_video.editor_responsavel
         ).first()
         
         if not video:
@@ -756,7 +762,8 @@ def kanban_get_card():
                 'categoria': video.categoria or '',
                 'palestrante': video.palestrante or '',
                 'link': video.link or '',
-                'aprovacao': video.aprovacao or ''
+                'aprovacao': video.aprovacao or '',
+                'editor_responsavel': video.editor_responsavel or ''
             }
         })
         
@@ -781,6 +788,7 @@ def kanban_edit_card():
     palestrante = request.vars.palestrante
     link = request.vars.link
     aprovacao = request.vars.aprovacao
+    editor_responsavel = request.vars.editor_responsavel
     
     # Validate required fields
     if not video_id:
@@ -838,6 +846,16 @@ def kanban_edit_card():
                 data['palestrante'] = None
         else:
             data['palestrante'] = None
+        
+        if editor_responsavel and editor_responsavel.strip():
+            # Validate editor exists and has editores=True
+            editor = db((db.auth_user.id == editor_responsavel) & (db.auth_user.editores == True)).select().first()
+            if editor:
+                data['editor_responsavel'] = editor_responsavel
+            else:
+                data['editor_responsavel'] = None
+        else:
+            data['editor_responsavel'] = None
                 
         data['link'] = link.strip() if link else None
         
@@ -872,6 +890,7 @@ def kanban_add_card():
     palestrante = request.vars.palestrante
     link = request.vars.link
     aprovacao = request.vars.aprovacao
+    editor_responsavel = request.vars.editor_responsavel
     
     # Validate required fields
     if not titulo or not titulo.strip():
@@ -924,6 +943,12 @@ def kanban_add_card():
             speaker = db(db.palestrante.id == palestrante).select().first()
             if speaker:
                 data['palestrante'] = palestrante
+        
+        if editor_responsavel and editor_responsavel.strip():
+            # Validate editor exists and has editores=True
+            editor = db((db.auth_user.id == editor_responsavel) & (db.auth_user.editores == True)).select().first()
+            if editor:
+                data['editor_responsavel'] = editor_responsavel
                 
         if link and link.strip():
             data['link'] = link.strip()
