@@ -19,6 +19,24 @@ if auth.has_membership("admin") | auth.has_membership("gerente"):
     ]))
     response.menu.append((T('Cadastros'), False, URL('default', 'lista'), []))
 
+# Menu for editors
+if auth.user and auth.user.editores:
+    if not any(menu_item[0] == T('Shiurim') for menu_item in response.menu):
+        response.menu.append((T('Shiurim'), False, URL('media', 'index'), [
+            (T('Lista'), False, URL('media', 'index'), []),
+            (T('Kanban Status'), False, URL('media', 'kanban'), []),
+            (T('Kanban Editores'), False, URL('media', 'kanban_editores'), [])
+        ]))
+    else:
+        # Add Kanban Editores to existing Shiurim menu
+        for i, menu_item in enumerate(response.menu):
+            if menu_item[0] == T('Shiurim'):
+                shiurim_submenu = list(menu_item[3])
+                if not any(sub_item[0] == T('Kanban Editores') for sub_item in shiurim_submenu):
+                    shiurim_submenu.append((T('Kanban Editores'), False, URL('media', 'kanban_editores'), []))
+                    response.menu[i] = (menu_item[0], menu_item[1], menu_item[2], shiurim_submenu)
+                break
+
 # ----------------------------------------------------------------------------------------------------------------------
 # provide shortcuts for development. you can remove everything below in production
 # ----------------------------------------------------------------------------------------------------------------------
