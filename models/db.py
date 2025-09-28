@@ -128,6 +128,7 @@ auth.settings.extra_fields['auth_user'] = [
              Field('ativo', 'boolean', default=True),
              Field('foto', 'upload'),
              Field('obs', 'text'),
+             Field('editores', 'boolean', default=False),
 ]
 auth.define_tables(username=True, signature=False)
 
