@@ -196,6 +196,7 @@
 'JSON': 'JSON',
 'JSON export of visible columns': 'JSON export of visible columns',
 'Kanban': 'Kanban',
+'Kanban Editores': 'Kanban Editores',
 'Key': 'Chave',
 'Key verified': 'Chave verificada',
 'Lancado': 'Lancado',
