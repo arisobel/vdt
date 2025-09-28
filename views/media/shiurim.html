@@ -461,16 +461,17 @@ $('#palests').on('select2:select', function (e) {
   var data = e.params.data;
   if (data.newTag) {
     // This is a new tag, call the backend to add it
-    addNewPalestrante(data.text);
+    addNewPalestrante(data.text, $(this));
   }
 });
 
-function addNewPalestrante(nome) {
+function addNewPalestrante(nome, $selectElement) {
   if (!nome || nome.trim() === '') {
     return;
   }
   
   nome = nome.trim();
+  $selectElement = $selectElement || $('#palests');
   
   $.ajax({
     url: '{{=URL("media", "add_palestrante")}}',
@@ -479,14 +480,14 @@ function addNewPalestrante(nome) {
     success: function(response) {
       if (response.success) {
         // Remove the temporary option and add the real one with proper ID
-        $('#palests option[value="' + nome + '"]').remove();
+        $selectElement.find('option[value="' + nome + '"]').remove();
         
         // Add new option with proper ID from database
         var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
-        $('#palests').append(newOption);
+        $selectElement.append(newOption);
         
         // Trigger change to update Select2
-        $('#palests').trigger('change');
+        $selectElement.trigger('change');
         
         // Show success feedback (if you have a feedback system)
         if (typeof showFeedback === 'function') {
@@ -498,8 +499,8 @@ function addNewPalestrante(nome) {
         }
       } else {
         // Remove the temporary option on error
-        $('#palests option[value="' + nome + '"]').remove();
-        $('#palests').trigger('change');
+        $selectElement.find('option[value="' + nome + '"]').remove();
+        $selectElement.trigger('change');
         
         if (typeof showFeedback === 'function') {
           showFeedback('error', 'Erro ao adicionar palestrante: ' + response.message);
@@ -510,8 +511,8 @@ function addNewPalestrante(nome) {
     },
     error: function() {
       // Remove the temporary option on error
-      $('#palests option[value="' + nome + '"]').remove();
-      $('#palests').trigger('change');
+      $selectElement.find('option[value="' + nome + '"]').remove();
+      $selectElement.trigger('change');
       
       if (typeof showFeedback === 'function') {
         showFeedback('error', 'Erro de conexão ao adicionar palestrante.');
