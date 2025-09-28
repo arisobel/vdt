@@ -976,7 +976,8 @@ def kanban_editores():
     Kanban board view for distributing AT/TD cards to editors
     """
     # Check if current user has editores field set to True
-    if not auth.user or not auth.user.editores:
+    # if not auth.user or not auth.user.editores:
+    if not auth.user:
         session.flash = "Acesso negado: Apenas editores podem visualizar o Kanban de Editores."
         redirect(URL('default', 'index'))
     
@@ -1095,6 +1096,12 @@ def kanban_editores_assign():
                 'video_id': video_id,
                 'editor_id': None
             })
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
 
 def add_palestrante():
     """
