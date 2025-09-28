@@ -241,10 +241,17 @@ $(document).ready(function() {
                     if (response.success) {
                         showFeedback('success', response.message);
                         updateColumnCounts();
+                        
+                        // Log the update for debugging (only in development)
+                        if (window.console && window.console.log) {
+                            console.log('Video ' + videoId + ' moved to status: ' + newStatus);
+                        }
                     } else {
                         showFeedback('error', 'Erro: ' + response.message);
                         // Revert the move if failed
-                        location.reload();
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
                     }
                 },
                 error: function() {
