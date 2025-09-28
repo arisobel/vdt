@@ -675,28 +675,37 @@ function initChosenPalestrante() {
     });
 
     // Handle the search input and add button when no results found
-    $('#cardSpeaker_chosen').on('keyup', '.search-field input', function(e) {
+    $('#cardSpeaker_chosen').on('input', '.search-field input', function(e) {
         var searchText = $(this).val().trim();
-        
+
         if (searchText) {
-            // Use a small delay to allow Chosen.js to process the search and show no-results
             setTimeout(function() {
+                var $chosenResults = $('#cardSpeaker_chosen .chosen-results');
                 var $noResults = $('#cardSpeaker_chosen .no-results');
-                var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
-                
-                // Check if there are no results visible or no active results
-                if ($noResults.is(':visible') || activeResults === 0) {
-                    // Add the button if it doesn't exist
-                    if (!$noResults.find('.add-palestrante-btn').length) {
-                        var buttonHtml = ' "<strong>' + searchText + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;" data-nome="' + searchText + '">Adicionar</button>';
-                        $noResults.append(buttonHtml);
+                var activeResults = $chosenResults.find('.active-result').length;
+
+                // Se não há resultados ativos, adiciona (ou atualiza) o botão manualmente
+                if (activeResults === 0) {
+                    // Se .no-results não existe, cria
+                    if ($noResults.length === 0) {
+                        $chosenResults.append(
+                            '<li class="no-results">Nenhum resultado encontrado para "<strong>' + searchText + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;" data-nome="' + searchText + '">Adicionar</button></li>'
+                        );
                     } else {
-                        // Update existing button with new search text
+                        // Atualiza texto e data-nome do botão existente
                         $noResults.find('strong').text(searchText);
                         $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
                     }
+                } else {
+                    // Remove o botão se aparecer resultados novamente
+                    if ($noResults.length > 0) {
+                        $noResults.remove();
+                    }
                 }
-            }, 100); // Small delay to let Chosen.js update the DOM
+            }, 100);
+        } else {
+            // Remove botão se campo de busca esvaziar
+            $('#cardSpeaker_chosen .no-results').remove();
         }
     });
 
@@ -704,14 +713,14 @@ function initChosenPalestrante() {
     $('#cardSpeaker_chosen').on('click', '.add-palestrante-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         var nome = $(this).attr('data-nome');
         if (nome && nome.trim()) {
             addNewPalestrante(nome.trim());
         }
     });
 }
-
+    
 function addNewPalestrante(nome) {
     if (!nome || nome.trim() === '') {
         return;
