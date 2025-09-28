@@ -5,7 +5,7 @@
 <style>
 .kanban-board {
     display: flex;
-    gap: 20px;
+    gap: 20px;c
     padding: 20px;
     overflow-x: auto;
     min-height: 600px;
@@ -53,6 +53,26 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     border-left: 4px solid #007bff;
     transition: all 0.2s ease;
+    position: relative;
+}
+
+.kanban-card .edit-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #666;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.kanban-card:hover .edit-icon {
+    opacity: 1;
+}
+
+.kanban-card .edit-icon:hover {
+    color: #007bff;
 }
 
 .kanban-card:hover {
@@ -227,6 +247,7 @@
                     {{if videos:}}
                         {{for video in videos:}}
                             <div class="kanban-card" data-video-id="{{=video['media_video']['id']}}">
+                                <i class="bi bi-pencil-square edit-icon" onclick="editCard({{=video['media_video']['id']}}); event.stopPropagation();" title="Editar card"></i>
                                 <div class="kanban-card-title">{{=video['media_video']['titulo'][:50]}}{{='...' if len(video['media_video']['titulo']) > 50 else ''}}</div>
                                 
                                 <div class="kanban-card-meta">
@@ -279,6 +300,7 @@
             <div class="modal-body">
                 <form id="addCardForm">
                     <input type="hidden" id="selectedStatus" name="status" value="">
+                    <input type="hidden" id="cardId" name="card_id" value="">
                     
                     <div class="form-group">
                         <label for="cardTitle">Título *</label>
@@ -332,7 +354,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="addNewCard()">Adicionar Card</button>
+                <button type="button" class="btn btn-primary" id="modalActionButton" onclick="saveCard()">Adicionar Card</button>
             </div>
         </div>
     </div>
@@ -392,7 +414,10 @@ $(document).ready(function() {
     }).disableSelection();
 });
 
+
 // Show feedback messages - Global function
+
+
 function showFeedback(type, message) {
     var feedbackClass = type === 'success' ? 'success-feedback' : 'error-feedback';
     var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
@@ -405,7 +430,9 @@ function showFeedback(type, message) {
     }
 }
 
+
 // Update column counts - Global function
+
 function updateColumnCounts() {
     $('.kanban-column').each(function() {
         var count = $(this).find('.kanban-card').length;
@@ -423,11 +450,114 @@ function updateColumnCounts() {
 
 // Show add card modal
 function showAddCardModal(statusCode, statusName) {
+    $('#cardId').val(''); // Clear card ID for add mode
     $('#selectedStatus').val(statusCode);
     $('#addCardModalLabel').text('Adicionar Novo Card - ' + statusName);
     $('#addCardForm')[0].reset();
     $('#selectedStatus').val(statusCode); // Reset clears this, so set again
+    $('#modalActionButton').text('Adicionar Card');
     $('#addCardModal').modal('show');
+}
+
+// Edit card function
+function editCard(videoId) {
+    // Get card data via AJAX
+    $.ajax({
+        url: '{{=URL("media", "kanban_get_card")}}',
+        method: 'POST',
+        data: { video_id: videoId },
+        success: function(response) {
+            if (response.success) {
+                // Populate form with existing data
+                $('#cardId').val(response.data.id);
+                $('#cardTitle').val(response.data.titulo);
+                $('#cardDescription').val(response.data.resenha);
+                $('#cardType').val(response.data.tipo_media);
+                $('#cardCategory').val(response.data.categoria);
+                $('#cardSpeaker').val(response.data.palestrante);
+                $('#cardLink').val(response.data.link);
+                $('#selectedStatus').val(response.data.aprovacao);
+                
+                // Update modal title and button
+                $('#addCardModalLabel').text('Editar Card');
+                $('#modalActionButton').text('Salvar Alterações');
+                
+                // Show modal
+                $('#addCardModal').modal('show');
+            } else {
+                showFeedback('error', 'Erro ao carregar dados do card: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão ao carregar dados do card.');
+        }
+    });
+}
+
+// Unified save function (handles both add and edit)
+function saveCard() {
+    var cardId = $('#cardId').val();
+    var isEdit = cardId && cardId.trim() !== '';
+    
+    if (isEdit) {
+        updateCard();
+    } else {
+        addNewCard();
+    }
+}
+
+// Update existing card
+function updateCard() {
+    var formData = {
+        video_id: $('#cardId').val(),
+        titulo: $('#cardTitle').val(),
+        resenha: $('#cardDescription').val(),
+        tipo_media: $('#cardType').val(),
+        categoria: $('#cardCategory').val(),
+        palestrante: $('#cardSpeaker').val(),
+        link: $('#cardLink').val(),
+        aprovacao: $('#selectedStatus').val()
+    };
+    
+    // Basic validation
+    if (!formData.titulo.trim()) {
+        showFeedback('error', 'Título é obrigatório');
+        return;
+    }
+    
+    if (!formData.tipo_media) {
+        showFeedback('error', 'Tipo de mídia é obrigatório');
+        return;
+    }
+    
+    // Show loading state
+    $('#modalActionButton').prop('disabled', true).text('Salvando...');
+    
+    // Submit via AJAX
+    $.ajax({
+        url: '{{=URL("media", "kanban_edit_card")}}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showFeedback('success', 'Card atualizado com sucesso!');
+                $('#addCardModal').modal('hide');
+                
+                // Reload the page to show the updated card
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showFeedback('error', 'Erro: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão. Tente novamente.');
+        },
+        complete: function() {
+            $('#modalActionButton').prop('disabled', false).text('Salvar Alterações');
+        }
+    });
 }
 
 // Add new card
@@ -455,7 +585,7 @@ function addNewCard() {
     }
     
     // Show loading state
-    $('button[onclick="addNewCard()"]').prop('disabled', true).text('Adicionando...');
+    $('#modalActionButton').prop('disabled', true).text('Adicionando...');
     
     // Submit via AJAX
     $.ajax({
@@ -479,7 +609,7 @@ function addNewCard() {
             showFeedback('error', 'Erro de conexão. Tente novamente.');
         },
         complete: function() {
-            $('button[onclick="addNewCard()"]').prop('disabled', false).text('Adicionar Card');
+            $('#modalActionButton').prop('disabled', false).text('Adicionar Card');
         }
     });
 }

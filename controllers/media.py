@@ -126,7 +126,13 @@ def index():
                )
 
 
+@auth.requires_login()
 def cards():
+    # Check if current user has editores field set to True
+    if not auth.user or not auth.user.editores:
+        session.flash = "Acesso negado: Apenas editores podem visualizar os cartões."
+        redirect(URL('default', 'index'))
+    
     response.title = "Shiurim"
     categ = request.vars.categ or None
     paletrante = request.vars.palestr or None
@@ -704,6 +710,145 @@ def kanban_update():
             'message': 'Status atualizado com sucesso',
             'video_id': video_id,
             'new_status': new_status
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
+
+@auth.requires_login()
+def kanban_get_card():
+    """
+    AJAX endpoint to get card data for editing
+    Requires user authentication
+    """
+    video_id = request.vars.video_id
+    
+    if not video_id:
+        return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
+    
+    try:
+        # Get video data with related information
+        video = db(db.media_video.id == video_id).select(
+            db.media_video.id,
+            db.media_video.titulo,
+            db.media_video.resenha,
+            db.media_video.tipo_media,
+            db.media_video.categoria,
+            db.media_video.palestrante,
+            db.media_video.link,
+            db.media_video.aprovacao
+        ).first()
+        
+        if not video:
+            return response.json({'success': False, 'message': 'Vídeo não encontrado'})
+        
+        return response.json({
+            'success': True,
+            'data': {
+                'id': video.id,
+                'titulo': video.titulo or '',
+                'resenha': video.resenha or '',
+                'tipo_media': video.tipo_media or '',
+                'categoria': video.categoria or '',
+                'palestrante': video.palestrante or '',
+                'link': video.link or '',
+                'aprovacao': video.aprovacao or ''
+            }
+        })
+        
+    except Exception as e:
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
+
+@auth.requires_login()
+def kanban_edit_card():
+    """
+    AJAX endpoint to update an existing video card
+    Requires user authentication
+    """
+    # Get form data
+    video_id = request.vars.video_id
+    titulo = request.vars.titulo
+    resenha = request.vars.resenha
+    tipo_media = request.vars.tipo_media
+    categoria = request.vars.categoria
+    palestrante = request.vars.palestrante
+    link = request.vars.link
+    aprovacao = request.vars.aprovacao
+    
+    # Validate required fields
+    if not video_id:
+        return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
+    
+    if not titulo or not titulo.strip():
+        return response.json({'success': False, 'message': 'Título é obrigatório'})
+    
+    if not tipo_media:
+        return response.json({'success': False, 'message': 'Tipo de mídia é obrigatório'})
+    
+    # Valid approval statuses
+    valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
+    
+    if aprovacao not in valid_statuses:
+        return response.json({'success': False, 'message': 'Status de aprovação inválido'})
+    
+    # Valid media types
+    valid_types = ["L", "V", "YT", "A", "S"]
+    if tipo_media not in valid_types:
+        return response.json({'success': False, 'message': 'Tipo de mídia inválido'})
+    
+    try:
+        # Check if video exists
+        video = db(db.media_video.id == video_id).select().first()
+        if not video:
+            return response.json({'success': False, 'message': 'Vídeo não encontrado'})
+        
+        # Prepare data for update
+        data = {
+            'titulo': titulo.strip(),
+            'aprovacao': aprovacao,
+            'tipo_media': tipo_media
+        }
+        
+        # Add optional fields if provided
+        data['resenha'] = resenha.strip() if resenha else None
+            
+        if categoria and categoria.strip():
+            # Validate category exists
+            cat = db(db.categoria.id == categoria).select().first()
+            if cat:
+                data['categoria'] = categoria
+            else:
+                data['categoria'] = None
+        else:
+            data['categoria'] = None
+        
+        if palestrante and palestrante.strip():
+            # Validate speaker exists
+            speaker = db(db.palestrante.id == palestrante).select().first()
+            if speaker:
+                data['palestrante'] = palestrante
+            else:
+                data['palestrante'] = None
+        else:
+            data['palestrante'] = None
+                
+        data['link'] = link.strip() if link else None
+        
+        # Update the video
+        db(db.media_video.id == video_id).update(**data)
+        db.commit()
+        
+        return response.json({
+            'success': True, 
+            'message': 'Card atualizado com sucesso',
+            'video_id': video_id
         })
         
     except Exception as e:
