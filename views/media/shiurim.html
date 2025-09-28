@@ -2,14 +2,14 @@
 
 
 {{block head}}
-    <link rel="stylesheet" href="{{ =URL('static', 'plugins/chosen', args=['chosen.css']) }}">
+    <link rel="stylesheet" href="{{ =URL('static', 'plugins/select2', args=['select2.min.css']) }}">
     <link rel="stylesheet" href="{{ =URL('static', 'css', args=['jquery-ui.css']) }}">
 {{end}}
 
 
 
 {{block page_js}}
-    <script src="{{=URL('static','plugins/chosen', args=['chosen.jquery.min.js'])}}"></script>
+    <script src="{{=URL('static','plugins/select2', args=['select2.min.js'])}}"></script>
     <script src="{{=URL('static','js', args=['jquery-ui.min.js'])}}"></script>
     <script src="{{=URL('static','js', args=['jquery.ui.touch-punch.min.js'])}}"></script>
 
@@ -449,9 +449,78 @@
 
 {{ block script }}
 
-$('#palests').chosen({
-  width: "100%"
-})
+// Initialize Select2 for palestrante with tagging functionality
+$('#palests').select2({
+  width: "100%",
+  tags: true,
+  placeholder: "Digite para pesquisar ou adicionar novo palestrante..."
+});
+
+// Handle new palestrante creation
+$('#palests').on('select2:select', function (e) {
+  var data = e.params.data;
+  if (data.newTag) {
+    // This is a new tag, call the backend to add it
+    addNewPalestrante(data.text);
+  }
+});
+
+function addNewPalestrante(nome) {
+  if (!nome || nome.trim() === '') {
+    return;
+  }
+  
+  nome = nome.trim();
+  
+  $.ajax({
+    url: '{{=URL("media", "add_palestrante")}}',
+    method: 'POST',
+    data: { nome: nome },
+    success: function(response) {
+      if (response.success) {
+        // Remove the temporary option and add the real one with proper ID
+        $('#palests option[value="' + nome + '"]').remove();
+        
+        // Add new option with proper ID from database
+        var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
+        $('#palests').append(newOption);
+        
+        // Trigger change to update Select2
+        $('#palests').trigger('change');
+        
+        // Show success feedback (if you have a feedback system)
+        if (typeof showFeedback === 'function') {
+          if (response.message === 'Palestrante já existia') {
+            showFeedback('success', 'Palestrante "' + response.nome + '" selecionado!');
+          } else {
+            showFeedback('success', 'Palestrante "' + response.nome + '" adicionado com sucesso!');
+          }
+        }
+      } else {
+        // Remove the temporary option on error
+        $('#palests option[value="' + nome + '"]').remove();
+        $('#palests').trigger('change');
+        
+        if (typeof showFeedback === 'function') {
+          showFeedback('error', 'Erro ao adicionar palestrante: ' + response.message);
+        } else {
+          alert('Erro ao adicionar palestrante: ' + response.message);
+        }
+      }
+    },
+    error: function() {
+      // Remove the temporary option on error
+      $('#palests option[value="' + nome + '"]').remove();
+      $('#palests').trigger('change');
+      
+      if (typeof showFeedback === 'function') {
+        showFeedback('error', 'Erro de conexão ao adicionar palestrante.');
+      } else {
+        alert('Erro de conexão ao adicionar palestrante.');
+      }
+    }
+  });
+}
 
 
 $('#erase-date').on('click', function(){
@@ -469,11 +538,11 @@ $('#erase-date').on('click', function(){
 });
 */
 
-$('#categs').chosen({
+$('#categs').select2({
   width: "100%"
 })
 
-$('#tags').chosen({
+$('#tags').select2({
   width: "100%"
 })
 
@@ -481,7 +550,17 @@ $('.chosen-toggle').each(function(index) {
   console.log(index);
   $(this).on('click', function() {
     console.log($(this).parent().find('option').text());
-    $(this).parent().find('option').prop('selected', $(this).hasClass('select')).parent().trigger('chosen:updated');
+    // Updated for Select2: clear all selections
+    if ($(this).hasClass('deselect')) {
+      $(this).parent().find('select').val(null).trigger('change');
+    } else {
+      // Select all (if you have a select all button)
+      var allValues = [];
+      $(this).parent().find('option').each(function() {
+        allValues.push($(this).val());
+      });
+      $(this).parent().find('select').val(allValues).trigger('change');
+    }
   });
 });
 
