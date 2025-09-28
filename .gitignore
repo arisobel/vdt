@@ -3,29 +3,34 @@
 *.pyc
 __pycache__/
 
-# web2py - Pastas de Log e Sessão (INCLUI ERROS)
-#################################
-logs/        # <-- Esta linha ignora todos os logs, incluindo os de erro.
+# Logs de Execução e Arquivos Temporários
+#########################################
+logs/
 sessions/
 errors/
+*.log
+*.out
+*.bak
+*.1
+*.py.bak
+*.html.bak
+*.css.bak
+*.js.bak
 
-
-# web2py - Banco de Dados (SQLite)
+# Bancos de Dados e Backups Web2py
 #################################
 *.sqlite
 *.db
-*.bak
+databases/
+sql.log
+routes.example.py
+
+# Arquivos de Mídia e Conteúdo Binário Grande
+#############################################
+static/files/           # Ignora TUDO dentro da pasta files/
+static/teste/           # Se essa for uma pasta de teste com mídia
 *.vtt
 *.mp4
-
-# web2py - Arquivos de Upload e Mídia
-####################################
-uploads/
-private/
-applications/*/uploads/
-static/files/
-
-# web2py - Arquivos de Cache
-##############################
-applications/*/compiled/
-applications/*/cache/
+*.mp3
+*.m4a
+*.MOV

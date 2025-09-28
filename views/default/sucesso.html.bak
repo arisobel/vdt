@@ -1,4 +1,0 @@
-{{extend 'layout.html'}}
-<h2>Presença anotada com sucesso!</i></h2><br>
-<i class="fa fa-thumbs-up" style="font-size:48px"></i><br<br
-<a href="{{=URL('default','index')}}">Home <i class="fa fa-home" style="font-size:36px"></i></a>

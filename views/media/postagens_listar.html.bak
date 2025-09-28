@@ -1,3 +1,0 @@
-{{extend 'layout.html'}}
-<h1>This is the media/postagens_listar.html template</h1>
-{{=BEAUTIFY(response._vars)}}
