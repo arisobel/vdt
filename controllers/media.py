@@ -976,8 +976,7 @@ def kanban_editores():
     Kanban board view for distributing AT/TD cards to editors
     """
     # Check if current user has editores field set to True
-    # if not auth.user or not auth.user.editores:
-    if not auth.user:
+    if not auth.user or not auth.user.editores:
         session.flash = "Acesso negado: Apenas editores podem visualizar o Kanban de Editores."
         redirect(URL('default', 'index'))
 
