@@ -724,6 +724,17 @@ function addNewPalestrante(nome) {
     
     nome = nome.trim();
     
+    // Basic validation
+    if (nome.length < 2) {
+        showFeedback('error', 'Nome muito curto (mínimo 2 caracteres)');
+        return;
+    }
+    
+    if (nome.length > 100) {
+        showFeedback('error', 'Nome muito longo (máximo 100 caracteres)');
+        return;
+    }
+    
     // Clear the search field to avoid confusion
     $('#cardSpeaker_chosen .search-field input').val('');
     
