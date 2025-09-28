@@ -390,36 +390,36 @@ $(document).ready(function() {
             });
         }
     }).disableSelection();
-    
-    // Show feedback messages
-    function showFeedback(type, message) {
-        var feedbackClass = type === 'success' ? 'success-feedback' : 'error-feedback';
-        var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
-        $('#feedback-area').html(feedbackHtml);
-        
-        if (type === 'success') {
-            setTimeout(function() {
-                $('#feedback-area').empty();
-            }, 3000);
-        }
-    }
-    
-    // Update column counts
-    function updateColumnCounts() {
-        $('.kanban-column').each(function() {
-            var count = $(this).find('.kanban-card').length;
-            $(this).find('.kanban-column-header small').text('(' + count + ' items)');
-            
-            // Show/hide empty message
-            var emptyDiv = $(this).find('.kanban-empty');
-            if (count === 0 && emptyDiv.length === 0) {
-                $(this).find('.kanban-cards').append('<div class="kanban-empty">Nenhum item nesta coluna</div>');
-            } else if (count > 0 && emptyDiv.length > 0) {
-                emptyDiv.remove();
-            }
-        });
-    }
 });
+
+// Show feedback messages - Global function
+function showFeedback(type, message) {
+    var feedbackClass = type === 'success' ? 'success-feedback' : 'error-feedback';
+    var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
+    $('#feedback-area').html(feedbackHtml);
+    
+    if (type === 'success') {
+        setTimeout(function() {
+            $('#feedback-area').empty();
+        }, 3000);
+    }
+}
+
+// Update column counts - Global function
+function updateColumnCounts() {
+    $('.kanban-column').each(function() {
+        var count = $(this).find('.kanban-card').length;
+        $(this).find('.kanban-column-header small').text('(' + count + ' items)');
+        
+        // Show/hide empty message
+        var emptyDiv = $(this).find('.kanban-empty');
+        if (count === 0 && emptyDiv.length === 0) {
+            $(this).find('.kanban-cards').append('<div class="kanban-empty">Nenhum item nesta coluna</div>');
+        } else if (count > 0 && emptyDiv.length > 0) {
+            emptyDiv.remove();
+        }
+    });
+}
 
 // Show add card modal
 function showAddCardModal(statusCode, statusName) {
