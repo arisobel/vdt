@@ -62,7 +62,20 @@ db.define_table('tag',
 #======================================
 tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
 icons_media = [("L","link"),("V","camera-video-fill"),("YT","youtube"),("A","mic-fill"),("S","spotify")]
-aprovacoes = [("P","Proposto"),("C","Curadoria"),("A","Aprovado")]
+aprovacoes = [("EP", "EM PROSPECÇÃO"),
+              ("AT","a Traduzir"),
+              ("TD","Traduzindo"),
+              ("RT","Revisando Tradução"),
+              ("PP","Pronto para publicar"),
+              ("PB","Publicado"),
+              ("AC","Arquivado / Catalogado"),
+              ("RC","Recusado | Somente VDT+"),
+              ("RT", "Recusado total"),
+              ("PV", "Perdemos o vídeoC"),
+              ("P","Proposto"),
+              ("C","Curadoria"),
+              ("A","Aprovado")
+             ] 
 idiomas = {"p":"Portugues","i":"Ingles","h":"Hebraico","e":"Espanhol","n":"Nenhuma"}
 
 
