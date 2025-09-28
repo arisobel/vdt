@@ -682,10 +682,9 @@ function initChosenPalestrante() {
             // Use a small delay to allow Chosen.js to process the search and show no-results
             setTimeout(function() {
                 var $noResults = $('#cardSpeaker_chosen .no-results');
-                var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
                 
-                // Check if there are no results visible or no active results
-                if ($noResults.is(':visible') || activeResults === 0) {
+                // Only show button when no-results div is actually visible (meaning no matches found)
+                if ($noResults.is(':visible') && $noResults.length > 0) {
                     // Add the button if it doesn't exist
                     if (!$noResults.find('.add-palestrante-btn').length) {
                         var buttonHtml = ' "<strong>' + searchText + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;" data-nome="' + searchText + '">Adicionar</button>';
@@ -695,8 +694,14 @@ function initChosenPalestrante() {
                         $noResults.find('strong').text(searchText);
                         $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
                     }
+                } else {
+                    // Remove button if results are now available
+                    $('#cardSpeaker_chosen .add-palestrante-btn').remove();
                 }
             }, 100); // Small delay to let Chosen.js update the DOM
+        } else {
+            // Remove button when search field is empty
+            $('#cardSpeaker_chosen .add-palestrante-btn').remove();
         }
     });
 
@@ -747,6 +752,9 @@ function addNewPalestrante(nome) {
                 // Update chosen and close dropdown
                 $('#cardSpeaker').trigger('chosen:updated');
                 $('#cardSpeaker').trigger('chosen:close');
+                
+                // Remove the add button since operation completed
+                $('#cardSpeaker_chosen .add-palestrante-btn').remove();
                 
                 // Show success feedback
                 if (response.message === 'Palestrante já existia') {

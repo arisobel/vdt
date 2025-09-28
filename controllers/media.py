@@ -1103,6 +1103,7 @@ def kanban_editores_assign():
             'message': f'Erro interno: {str(e)}'
         })
 
+@auth.requires_login()
 def add_palestrante():
     """
     AJAX endpoint to add a new palestrante (speaker)
