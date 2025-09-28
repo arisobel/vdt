@@ -1,0 +1,79 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+    <link rel="stylesheet" href="{{ =URL('static', 'plugins/chosen', args=['chosen.css']) }}">
+{{end}}
+
+
+
+{{block page_js}}
+    <script src="{{=URL('static','plugins/chosen', args=['chosen.jquery.min.js'])}}"></script>
+{{end page_js}}
+
+
+<div class="wrapper">
+  <select multiple>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+  <button type="button" class="chosen-toggle select">Select all</button>
+  <button type="button" class="chosen-toggle deselect">Deselect all</button>
+</div>
+<div class="wrapper">
+  <select id="second" name="ranktypeselect[]" multiple="multiple" size="5">
+    <optgroup label="OFF">
+      <option>QB</option>
+      <option>RB</option>
+      <option>WR</option>
+      <option>TE</option>
+      <option>OL</option>
+    </optgroup>
+    <optgroup label="IDP">
+      <option>NT</option>
+      <option>DT</option>
+      <option>DE</option>
+      <option>DL</option>
+      <option>DB</option>
+      <option>LB</option>
+      <option>SF</option>
+      <option>CB</option>
+    </optgroup>
+    <optgroup label="ETC">
+      <option>K</option>
+      <option>P</option>
+      <option>LS</option>
+      <option>D/ST</option>
+    </optgroup>
+  </select>
+
+  <button type="button" class="chosen-toggle select">Select all</button>
+  <button type="button" class="chosen-toggle deselect">Deselect all</button>
+</div>
+
+
+
+{{block script}}
+$('select').chosen({
+  width: "300px"
+});
+
+$('.chosen-toggle').each(function(index) {
+  console.log(index);
+  $(this).on('click', function() {
+    console.log($(this).parent().find('option').text());
+    $(this).parent().find('option').prop('selected', $(this).hasClass('select')).parent().trigger('chosen:updated');
+  });
+});
+{{end script}}
+
+
+
+{{block style}}
+body {
+  padding: 1em;
+}
+.wrapper + .wrapper {
+  margin-top: 20px;
+}
+{{ end style }}

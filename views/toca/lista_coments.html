@@ -1,0 +1,43 @@
+{{ for c in coments:}}
+
+
+<article class="comentario">
+    <header>
+        <b>{{=c.nome_user or "Anônimo" }}</b>
+        <time datetime="2021-08-26">{{=c.criado_em.strftime("%d %B %Y %I:%M %p")}}</time>
+    </header>
+    <p>{{=c.comentario}}</p>
+</article>
+
+
+{{ pass }}
+
+
+<style>
+.comentario {
+    border: 1px solid #ddd;
+    padding: 5px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+    
+.comentario header {  
+    box-shadow: 0 0 1px 2px #fff;
+}
+    
+.comentario header b {
+    margin: 0;
+    color: #333;
+
+}
+    
+.comentario time {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.comentario:hover {
+    background-color: #f5f5f5;
+}
+
+</style>

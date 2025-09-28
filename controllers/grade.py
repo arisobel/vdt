@@ -1,0 +1,66 @@
+# -*- coding: utf-8 -*-
+# tente algo como
+#@auth.requires_login()
+def index():
+    response.view = 'generic.html' # use a generic view
+    tablename = request.args(0) or request.vars.tbl
+    if not tablename in db.tables: raise HTTP(403)
+    #grid = SQLFORM.smartgrid(db[tablename], args=[tablename])
+    grid = SQLFORM.grid(db[tablename], args=[tablename])
+    return dict(grid=grid)
+
+
+
+# ---- Smart Grid (example) -----
+#@auth.requires_login()
+def lista():
+    response.view = 'generic.html' # use a generic view
+    tablename = request.vars.tbl
+    #if not tablename in db.tables: raise HTTP(403)
+    #grid = SQLFORM.smartgrid(db[tablename], args=[tablename], vars=dict(tbl=tablename))
+    grid = SQLFORM.grid(db[tablename], args=[tablename], viewargs=dict(tbl=tablename))
+    return dict(grid=grid)
+
+#=================================================================
+
+@auth.requires_login()
+def manage():
+    tbl  = str(request.vars.tbl).strip()
+    dlt  =  True if request.vars.dlt else  False
+    url = str(request.vars.url).strip()
+    tit  = request.vars.tit or tbl.capitalize().replace("_", " ")
+    links =[]
+
+    if url!="None":
+        controller, function = url.split("-")
+        links=[dict(header='Grade',
+                    body=lambda row:A(SPAN(_class = "icon plus icon-plus glyphicon glyphicon-plus"),_class="button btn", 
+                                      _href=URL(c=controller, f=function, args=[row.id]), _target='_blank' )
+                    )
+               ]
+
+    #response.view = 'generic.html'
+    if tbl:
+        form = SQLFORM.grid(db[tbl],
+            buttons_placement='left', # Botões a esquerda
+            showbuttontext=False, # Exibe os botões
+            orderby=~db[tbl]['id'],
+            links=links,
+            links_placement = 'left',
+            maxtextlength=50,
+            user_signature=False,
+            deletable=dlt,
+            _class='web2py_grid',
+            csv=False,)
+    else:
+        form = "Erro"
+    return dict(grid=form, tit=tit)
+
+#=================================================================
+
+@auth.requires_login()
+def redir():
+    tbl = request.args(0)
+    tit = request.args(1) or tbl
+    url = request.args(2) or None
+    redirect(URL('grade','manage', vars=dict(tbl=tbl, tit=tit, url=url)))

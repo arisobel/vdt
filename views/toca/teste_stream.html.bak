@@ -1,0 +1,15 @@
+<h1>This is the toca/teste_stream.html template</h1>
+<video controls  id="video_vdt">
+    <source src="{{=URL('toca','stream_video',args=[url_arquivo])}}" type="video/mp4">
+    Seu navegador não suporta vídeos MP4.
+</video>
+
+
+<script>
+    
+document.getElementById('video_vdt').addEventListener('play', (event) => {
+    alert("opaaaaa");
+    event.target.requestPictureInPicture();
+});
+    
+</script>

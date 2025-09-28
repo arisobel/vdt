@@ -1,0 +1,231 @@
+{{extend 'layout.html'}}
+    <h1>Registro de Video 
+        <small>
+           <a class="btn  btn-default btn-secondary" href="{{=URL('toca','index',args=[request.args(0)])}}" previewlistener="true"><i class="icon icon-play bi bi-play"></i></a>
+        </small>
+    </h1>
+<div>
+
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="home">
+ 
+        <div class='row'>
+            <div class='col-md-12' style="background-color:#a4c6fc;>
+                <div class="box" >
+                    <div class="box-body" ">
+
+                    <div class='row-fluid'>
+                    {{=form_video_editar.custom.begin}}
+                        <div class="form-group col-lg-11  col-md-11 col-sm-11">                 
+                               <div class="row">
+                                    <div class="form-group  col-lg-7  col-md-7  col-sm-7">
+                                        <label>{{=db.media_video.titulo.label}}</label>
+                                        {{=form_video_editar.custom.widget.titulo}}
+                                    </div>
+                                    <div class="form-group  col-lg-5  col-md-5  col-sm-5">
+                                        <label>{{=db.media_video.palestrante.label}}</label>
+                                        {{=form_video_editar.custom.widget.palestrante}}
+                                    </div>
+                               </div>
+                               <div class="row">
+                                    <div class="form-group  col-lg-4  col-md-4  col-sm-4">
+                                        <label>{{=db.media_video.categoria.label}}</label>
+                                        {{=form_video_editar.custom.widget.categoria}}
+                                    </div>
+                                    
+                                    <div class="form-group col-md-3">
+                                        <label>{{=db.media_video.tipo_media.label}}</label>
+                                        {{=form_video_editar.custom.widget.tipo_media}}
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label>{{=db.media_video.aprovacao.label}}</label>
+                                        {{=form_video_editar.custom.widget.aprovacao}}
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label>{{=db.media_video.lancado.label}}</label>
+                                        {{=form_video_editar.custom.widget.lancado}}
+                                    </div>
+                               </div>
+                               <div class="row">
+                                    <div class="form-group  col-lg-2  col-md-2  col-sm-6">
+                                        <label>{{=db.media_video.idioma.label}}</label>
+                                        {{=form_video_editar.custom.widget.idioma}}
+                                    </div>
+                                    
+                                    <div class="form-group col-md-2">
+                                        <label>{{=db.media_video.legendas.label}}</label>
+                                        {{=form_video_editar.custom.widget.legendas}}
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <label>{{=db.media_video.duracao.label}}</label>
+                                        {{=form_video_editar.custom.widget.duracao}}
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label>{{=db.media_video.minutes.label}}</label>
+                                        {{=form_video_editar.custom.widget.minutes}}
+                                    </div>
+                                    <div class="form-group col-md-2 ">
+                                        <label>Top 10</label><br>
+                                        <div class="check-container col-md-12">
+                                            {{=form_video_editar.custom.widget.eh_top}}
+                                        </div>
+
+                                    </div>
+                                   
+                               </div>
+							   <div class="row">
+                                    <div class="form-group  col-lg-6  col-md-6  col-sm-6">
+                                        <label>{{=db.media_video.link.label}}</label>
+                                        {{=form_video_editar.custom.widget.link}}
+                                    </div>   
+                                   
+                                    <div class="form-group  col-lg-3  col-md-3  col-sm-4">
+                                        <label>{{=db.media_video.id_ref_media.label}}</label>
+                                        {{=form_video_editar.custom.widget.id_ref_media}}
+                                    </div>   
+
+                                    <div class="form-group  col-lg-3  col-md-3  col-sm-3">
+                                        <label>{{=db.media_video.tag_chave.label}}</label>
+                                        {{=form_video_editar.custom.widget.tag_chave}}
+                                    </div>   
+                               </div>
+							   <div class="row">
+                                    <div class="form-group  col-lg-8  col-md-8  col-sm-8">
+                                        <label>{{=db.media_video.resenha.label}}</label>
+                                        {{=form_video_editar.custom.widget.resenha}}
+                                    </div>   
+                                    <div class="form-group  col-lg-4  col-md-4  col-sm-4">
+                                        <label>{{=db.media_video.tags.label}}</label>
+                                        {{=form_video_editar.custom.widget.tags}}
+                                    </div>   
+                               </div>
+							   <div class="row">
+                                    <div class="form-group  col-lg-12  col-md-12  col-sm-12">
+                                        <label>{{=db.media_video.arquivo.label}}</label>
+                                        {{=form_video_editar.custom.widget.arquivo}}
+                                        {{=form_video_editar.custom.widget.conteudo_arquivo}}
+                                    </div>   
+                               </div>
+							   <div class="row">
+                                    <div class="form-group  col-lg-5  col-md-5  col-sm-5">
+                                   
+                                        {{=form_video_editar.vars.arquivo}}
+                                        <video controls width="300" height="200">
+                                            <source src="{{=URL('default','download', args=form_video_editar.vars.url_arquivo)}}" type="video/mp4">
+                                            Seu navegador não suporta a tag de vídeo.
+                                        </video>	
+                                    </div>   	
+                                   <div class="form-group  col-lg-3  col-md-3  col-sm-3">
+                                       <label>Legendas associadas</label>
+                                       {{=form_legendas}}
+                                   </div>
+                                   <div class="form-group  col-lg-4  col-md-4  col-sm-4">
+                                       <label>Postagens feitas</label>
+                                       {{=form_posts}}
+                                   </div>
+                               </div>
+                      
+					  
+
+					  
+					  
+                        </div>       
+						{{=form_video_editar.custom.submit}}
+						{{=form_video_editar.custom.end}}
+              </div>
+			<div class="row">
+                {{if form_video_editar.vars.url_arquivo:}}
+                <div class="col-md-3">
+                     <select id='grupos' class="form-control">
+                        {{ for grupo in grupos: }}
+                           <option data-gp-id="{{=grupo.id}}" value={{=grupo.group_id}}>{{=grupo.group_name}}</option>
+
+                         {{ pass }}
+                     </select>
+               </div>  
+                
+                <div class="col-md-1">
+                     <span id='posta_video' class="btn btn-primary" data-video="{{=form_video_editar.vars.url_arquivo}}">
+                          Postar
+                     </select>
+               </div>  
+                <div class="col-md-1">
+                    <span id="loader" style="display: none;">
+                        <img src="{{=URL('static','images/loader.gif')}}" style="height: 35px;" alt="Loading...">
+                    </span>
+                </div>  
+               {{pass}}
+           </div>    
+                <br>
+       </div>
+            
+            
+    <style>
+        
+        .check-container {
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+        }
+        
+        /* Estilo para aumentar o tamanho do checkbox */
+        .form-check-input {
+            transform: scale(2.5); /* Ajuste este valor conforme necessário */
+        }
+        
+        #loader {
+            display: inline-block; /* Assegura que o loader se comporte como um elemento inline para alinhar ao lado do botão */
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        
+        .form-disable {
+            cursor: not-allowed;
+        }
+    </style>
+            
+            <script>
+                
+                
+                $("#posta_video").on("click", function(){
+                    var id_grupo = $("#grupos").val();
+                    var link = $(this).data('video');
+                    var video_id = "{{=request.args(0)}}";
+                    var gpid =$("#grupos").find(':selected').attr('data-gp-id');
+                    //alert( id_grupo + " - video => " + link);
+                    var url = "{{=URL('media','postar_wa')}}/"+video_id +"/"+id_grupo + "/" + gpid + "/" + link
+                    $("#loader").show(); // Mostra o loader
+                    //$("#form_video_editar input, #form_video_editar button , #posta_video").prop('disabled', true);
+
+                    $("#form_video_editar").addClass('form-disable');
+                    $("#form_video_editar").find('input, textarea, select, button').prop('disabled', true);
+
+                    
+                    $.ajax({
+                        url: url,       // URL da requisição
+                        type: 'GET',    // Tipo de requisição
+                        dataType: 'json', // Tipo de dados esperado como resposta
+                        success: function(data) {
+                            // Esta função é chamada se a requisição for bem-sucedida.
+                            // 'data' contém os dados retornados pelo servidor.
+                            console.log("Dados recebidos:", data);
+                            // Aqui você pode fazer algo com os dados recebidos.
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            // Esta função é chamada se ocorrer algum erro na requisição.
+                            console.log("Erro na requisição: " + textStatus);
+                        },
+                        complete: function(xhr, status) {
+                            $("#loader").hide(); // Oculta o loader após a conclusão da requisição
+                            // $("#form_video_editar input, #form_video_editar button , #posta_video ").prop('disabled', true);
+                            $("#form_video_editar").removeClass('form-disable');
+                            $("#form_video_editar").find('input, textarea, select, button').prop('disabled', false);
+                            web2py_component($('#lista_postagens').data('w2p_remote'), 'lista_postagens');
+                        }
+                    });
+                    
+                    
+                })
+            </script>

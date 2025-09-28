@@ -1,0 +1,82 @@
+{{extend 'layout.html'}}
+
+{{block header}}
+<div class="jumbotron jumbotron-fluid background" style="background-color: #333; color:white; padding:30px;word-wrap:break-word;">
+  <div class="container center">
+    <h1 class="display-5">VDT - Videos de Toire</h1>
+  </div>
+</div>
+{{end}}
+
+<div class="row">
+  <div class="col-md-12">
+    {{if 'message' in globals():}}
+    <h2>{{=message}}</h2>
+
+    {{ if auth.has_membership('admin') : }}
+            <div class="jumbotron jumbotron-fluid" style="padding:30px;word-wrap:break-word;">
+              <div class="container center">
+                  <a class="btn btn-primary" href="{{=URL('admin','default','index', scheme='https')}}">
+                  <i class="fa fa-cog"></i>
+                  {{=T("admin")}}
+                </a>
+
+                {{ for tbl in db.tables: }}
+                      {{ if tbl[:4] !="auth": }}
+
+                         <a class="btn btn-secondary" href="{{=URL('grade','redir',args=[tbl,tbl])}}">{{=tbl.replace('_',' ').title()}}</a>
+
+                      {{ pass }}
+                {{ pass }}
+              </div>
+            </div>
+            {{ pass }}
+
+
+          </div>
+  {{ pass }}
+</div>
+<script>
+    //alert("agora {{=content['hoje']}}");
+    $('#data-shiur').val("{{=content['hoje_frm']}}");
+    $("#data-shiur").css("width","130");
+    //carrega_alunos();
+    $(".btn-aluno").on('click', function(){
+         var txt = "";
+
+         var id_aluno = $(this).attr('aluno-id')
+         var aula = $("#qual-shiur").val();
+         var hora = $("#hr-"+id_aluno).val();
+         var data = $("#data-shiur").val();
+         var data_id = $(this).attr('data-id')
+
+         txt = "Aluno " + id_aluno + " data " + data + " hora " + hora+ " aula " + aula;
+         if(hora.length>0){
+             //alert(txt);
+             var params = id_aluno + "/" + data + "/" + hora + "/" + aula +"/" + data_id
+             web2py_component('../core/trata_pres/'+params, 'ret');
+         }
+
+
+    })
+
+    $(".limpa").on("change keyup", function(){
+        carrega_alunos()
+      })
+
+
+    $("#carrega").on("click", function(){
+         //carrega_alunos()
+ 
+      })
+    
+    
+    function carrega_alunos(){
+
+        $("#lista_presenca").html("Carregando");
+        //ajax("{{=URL('default','lista_presenca')}}",['qual_shiur', 'data_shiur'],'lista_presenca')   
+    }
+    
+    var notyf = new Notyf();
+
+</script>

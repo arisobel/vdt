@@ -1,0 +1,203 @@
+{{extend 'layout.html'}}
+<script src="https://www.youtube.com/iframe_api"></script>
+<h1>This is the toca_yt_new.html template</h1>
+
+
+<div id="youtube-player"></div>
+<div id="subtitles"></div>
+
+
+<!-- Contêiner do Sistema de Votação -->
+<div id="voting-container">
+    <!-- Botão de Votação -->
+    <div id="vote-button">
+        <i class="bi bi-hand-thumbs-up"></i>
+    </div>
+
+    <!-- Opções de Votação -->
+    <div id="voting-options" style="display: none;">
+        <button class="vote-option" data-vote-type="like"><i class="bi bi-hand-thumbs-up"></i></button>
+        <button class="vote-option" data-vote-type="heart"><i class="bi bi-heart"></i></button>
+        <button class="vote-option" data-vote-type="bomb"><i class="bi bi-lightning-charge-fill"></i></button>
+        <button class="vote-option" data-vote-type="must"><i class="bi bi-asterisk"></i></button>
+    </div>
+</div>
+
+
+<style>
+
+  
+#voting-container {
+    display: inline-block;
+    text-align: center; /* Para centralizar os botões dentro do container */
+}
+
+#voting-options {
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    display: none; /* Inicialmente oculto */
+}
+
+.vote-option {
+    display: block;
+    margin-bottom: 5px;
+    cursor: pointer;
+    background: none; /* Removendo estilos de fundo padrão */
+    border: none; /* Removendo borda padrão */
+    text-align: left; /* Alinhamento do texto e ícone à esquerda */
+}
+
+
+
+</style>
+
+
+
+<script>
+    
+    // Mostrar opções de votação quando o mouse passa sobre o botão
+    $("#vote-button").mouseenter(function(){
+        $("#voting-options").show();
+    });
+
+    // Ocultar opções de votação quando o mouse deixa o contêiner
+    $("#voting-container").mouseleave(function(){
+        $("#voting-options").hide();
+    });
+
+    // Enviar voto ao clicar em uma opção
+    $(".vote-option").click(function(){
+        var voteType = $(this).data("vote-type");
+        var contentId = $(this).data("content-id");
+
+
+        // Atualizar ícone no botão de votação
+        switch(voteType) {
+            case "like":
+                $("#vote-button").html('<i class="bi bi-hand-thumbs-up-fill" fill="#ff1500"></i>');
+                break;
+            case "heart":
+                $("#vote-button").html('<i class="bi bi-heart-fill"></i>');
+                break;
+            case "bomb":
+                $("#vote-button").html('<i class="bi bi-lightning-charge-fill"></i>');
+                break;
+            case "must":
+                $("#vote-button").html('<i class="bi bi-asterisk"></i>');
+                break;
+            // Adicione casos para outros tipos de votos, se necessário
+        }
+        
+        // Enviar voto via AJAX
+        $.ajax({
+            url: '#',
+            type: 'post',
+            data: {
+                content_id: contentId,
+                vote_type: voteType,
+                // Outros dados necessários
+            },
+            success: function(response){
+                // Tratar a resposta do servidor
+                $("#voting-options").hide();
+            }
+        });
+    });
+    
+    
+    
+    
+// execução das legenda
+let player;
+let captions = [];
+
+// Initialize YouTube Player
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtube-player', {
+        height: '360',
+        width: '640',
+        videoId: 'kCIWFI0ZPo0', // Replace with your YouTube video ID
+        events: {
+            'onStateChange': onPlayerStateChange
+        }
+    });
+}
+
+// Event handler for the YouTube player's state change
+function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.PLAYING) {
+        setInterval(updateCaption, 500); // Update captions every 500 milliseconds
+    }
+}
+
+// Fetch and parse VTT content
+fetchVTTContent('/init/default/download/legenda.arquivo.be38d32fc476ca4c.c2hpdXJfMDAwMTRfcHRfYnIudnR0.vtt').then(vttContent => {
+    captions = parseVTT(vttContent);
+});
+
+// Function to fetch VTT content
+async function fetchVTTContent(vttPath) {
+    try {
+        const response = await fetch(vttPath);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return await response.text();
+    } catch (error) {
+        console.error("Failed to fetch VTT file:", error);
+        return '';
+    }
+}
+
+// Function to parse VTT content
+    
+function parseVTT(vttString) {
+  let captions = [];
+  let lines = vttString.split('\n');
+  let timecodeRegex = /(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})/;
+
+  for (let i = 0; i < lines.length; i++) {
+    let timecode = timecodeRegex.exec(lines[i]);
+    if (timecode && i + 1 < lines.length) {
+      let startTime = convertToSeconds(timecode[1]);
+      let endTime = convertToSeconds(timecode[2]);
+      let text = lines[++i].trim();
+      captions.push({ startTime, endTime, text });
+    }
+  }
+
+  return captions;
+}
+
+function convertToSeconds(timecode) {
+  let parts = timecode.split(':');
+  let seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
+  return seconds;
+}
+
+    
+
+// Function to update captions
+function updateCaption() {
+    let currentTime = player.getCurrentTime();
+    let caption = findCaptionForTime(captions, currentTime);
+    //debugger;
+    displayCaption(caption);
+}
+
+// Function to find caption for the current time
+   
+function findCaptionForTime(captions, currentTime) {
+  return captions.find(caption => currentTime >= caption.startTime && currentTime <= caption.endTime) || { text: '' };
+}
+
+
+// Function to display captions
+function displayCaption(caption) {
+    document.getElementById('subtitles').innerText = caption.text;
+}
+
+    
+    
+</script>

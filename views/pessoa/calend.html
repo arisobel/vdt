@@ -1,0 +1,130 @@
+{{ stl = "info" }}
+ {{ class_fundo = ""}}
+<div class='row'>
+    <div class='col-md-8'>
+
+    <table class='table table-bordered' id="mensal">
+          <tr>
+            <th width="90">Seg</td>
+            <th width="90">Ter</td>
+            <th width="90">Qua</td>
+            <th width="90">Qui</td>
+            <th width="90">Sex</td>
+            <th width="90">Sab</td>
+            <th width="90">Dom</td>
+          </tr>
+        {{ for semana in calend:}}
+            <tr>
+            {{ for dia in semana:}}
+              {{if dia:}}
+                {{ if dia in dias_feriados:}}
+                    {{ fer = dias_feriados[dia]['nome']}}
+                    {{ tipo = dias_feriados[dia]['tipo']}}
+                    {{ class_fundo = "fnd" }}
+
+                {{ else: }}
+                    {{ fer =''}}
+                    {{ class_fundo = "" }}
+                {{ pass }}
+                <td height="90px" class="{{=class_fundo }}">
+                    <span class="pull-right">
+                         {{if fer: }}
+                                    {{ if tipo =="JD":}}
+                                        {{ stl = "primary" }}
+                                    {{ pass }}
+                             <span class="badge badge-{{=stl}} ">
+                                 {{=fer.capitalize()}}
+                             </span>
+                         {{ pass }}
+                         <span class="badge badge-dark">
+                              {{=dia}}
+                         </span>
+
+                    </span>
+                    {{ if dia in dic_presenca:}}
+                        {{for k,v in dic_presenca[dia].items():}}
+                          <span class="badge badge-{{=aulas.get(k,{}).get('cor','-')}}"> {{=aulas.get(k,{}).get('aula','-')}} - {{=v.strftime("%H:%M")}} </span><br>
+                        {{ pass }}
+                    {{ pass }}
+
+                </td>
+             {{else:}}
+                <td></td>
+             {{pass}}
+
+            {{ pass }}
+            </tr>
+        {{ pass }}
+        </table>
+    </div>
+    <div class="col-md-4">
+      <!--
+       Year {{=year}} - Month {{=month}} <br>
+       Periodos  {{=periodos}} <br>
+        {{for a in pessoa['aulas']:}}
+             <span>Aula: {{=a}}</span>
+            {{ for d in periodos[a]: }}
+                <span>Dia: {{=d}}</span><br>
+            {{ pass }}
+        {{ pass }}
+        <br> aulas {{=aulas}}
+        <br> tot_dias {{=tot_dias}}
+        <br> dic_aulas {{=dic_aulas}}
+        -->
+        <table class="table table-sm ">
+       <tr><th>Dia</th>
+        {{tot_aulas_mes = 0}}
+        {{ for a in pessoa['aulas']:}}
+           {{tot_aulas_mes+=len(aulas[a].get('esperadas',[]))}}
+            <th><span class="badge badge-{{=aulas[a]['cor']}}">{{=aulas[a]['aula']}}</span><span class="ml-1">{{=len(aulas[a].get('esperadas',[]))}} dias</span></th>
+       {{ pass }}
+       {{tot_aulas_mes = 1 if not tot_aulas_mes else tot_aulas_mes }}
+       </tr>
+        {{ for dia in tot_dias:}}
+             <tr> <td>{{=w_days[tot_dias[dia]]}} dia {{=dia}}</td>
+            {{ for a in pessoa['aulas']:}}
+                {{dias_w = aulas[a]['dias'] }}
+                {{#dias_w = aulas[a][tot_dias[dia]] }}
+                {{hora = dic_aulas.get(a,{}).get(dia,"-")}}
+                {{if len(str(hora)) > 3:}}
+                    {{ aulas[a]['executadas']+=1 }}
+                {{ pass }}
+                <td> {{=XML('<i class="fa fa-check"></i>') if tot_dias[dia] in dias_w else XML('<i class="fa fa-ban" style="color:red" ></i>')}}  {{=hora if len(str(hora)) > 3 else ""}}</td>
+            {{ pass }}
+           </tr>
+        {{ pass }}
+        <tr>
+             <td>
+                {{execut=sum([aulas[a]['executadas'] for a in pessoa['aulas'] ])}}
+                {{=execut}} de {{=tot_aulas_mes}} <br>
+                  <h3>
+                     {{=round((execut / tot_aulas_mes ) * 100,2)}}%
+                 </h3>
+
+             </td>
+            {{ for a in pessoa['aulas']:}}
+                {{pct = aulas[a]['executadas'] /len(aulas[a].get('esperadas',[0]))}}
+                <td>{{=aulas[a]['executadas']}} assistidas <br> {{= round((pct * 100),2)}}% </td>
+            {{ pass }}
+        </tr>
+        </table>
+    </div>
+</div>
+
+
+<style>
+#mensal
+{
+   table-layout: fixed;
+}
+    
+.fnd
+{
+   background-color: #b3ccff;
+}
+
+#mensal td {
+  padding: 5px;
+  border: 3px solid #deddd9;
+}
+</style>

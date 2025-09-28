@@ -1,0 +1,16 @@
+{{extend 'layout.html'}}
+{{ if so_tops: }}
+    <h1>Tops Shiurim</h1>
+{{else:}}
+    <h1>{{=cabec}}</h1>
+{{ pass }}
+{{=form}}
+
+
+<style>
+
+ th:nth-child(3), td:nth-child(3) {
+    min-width: 100px; /* Substitua 100px pela largura mínima desejada */
+}
+    
+</style>

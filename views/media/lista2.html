@@ -1,0 +1,145 @@
+{{extend 'layout.html'}}
+
+  <div class="container">
+    <div class="titulo-div">
+        Tops VDT
+        <img width="40px" height="40px" class="pull-left" style="margin-right: 15px;" src="/init/static/images/logo_vdt_icone_tr.png">
+    </div>
+
+    <div class="row pt-5 m-auto">
+
+
+    {{ for card in lista:}}
+      <div class="col-md-6 col-lg-4 pb-3">
+
+        <!-- Add a style="height: XYZpx" to div.card to limit the card height and display scrollbar instead -->
+        <div class="card card-custom bg-white border-white border-0" style="height: 450px">
+          <div class="card-custom-img" style="background-image: url({{=URL('default','download', args=[card.categoria.imagem])}});"></div>
+
+          <div class="card-custom-avatar">
+            <img class="img-fluid" src="{{=URL('default','download', args=[card.palestrante.foto])}}" alt="Avatar" />
+            <span class="badge badge-dark" style="">{{=card.palestrante.nome.upper()}}</span>
+          </div>
+          <div class="card-body" style="overflow-y: auto">
+            <h4 class="card-title">{{=card.media_video.titulo  }}</h4>
+              <b>{{=card.palestrante.nome.title()}}</b>
+           <p>
+               {{=card.media_video.resenha  }}
+              </p>
+          </div>
+          <div class="card-footer" style="background: inherit; border-color: inherit;">
+            <a class="btn btn-primary" href="{{=URL('toca','index', args=[card.media_video.id])}}" target="_blank" >
+              <i class="icon icon-play bi bi-play"></i>
+            </a>
+            <a href="#" class="btn btn-outline-primary">{{=dic_icon[card.media_video.tipo_media]}}</a>
+            <div class="likes pull-right">{{=LOAD('toca','load_votes', args=[card.media_video.id], ajax=True) }} </div>
+          </div>
+        </div>
+
+      </div>
+
+    {{ pass }}
+
+
+    </div>
+  </div>
+
+
+
+
+    <style>
+
+
+      .container {
+        font-size: 14px;
+        color: #666666;
+        font-family: Arial, sans-serif;
+      }
+
+        .card-custom {
+          overflow: hidden;
+          min-height: 450px;
+          box-shadow: 0 0 15px rgba(10, 10, 10, 0.3);
+          font-family: Arial, sans-serif;
+        }
+
+        .card-custom-img {
+          height: 200px;
+          min-height: 200px;
+          background-repeat: no-repeat;
+          background-size: cover;
+          background-position: center;
+          border-color: inherit;
+        }
+
+        /* First border-left-width setting is a fallback */
+        .card-custom-img::after {
+          position: absolute;
+          content: '';
+          top: 161px;
+          left: 0;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-top-width: 40px;
+          border-right-width: 0;
+          border-bottom-width: 0;
+          border-left-width: 545px;
+          border-left-width: calc(575px - 5vw);
+          border-top-color: transparent;
+          border-right-color: transparent;
+          border-bottom-color: transparent;
+          border-left-color: inherit;
+        }
+
+        .card-custom-avatar img {
+          border-radius: 50%;
+          box-shadow: 0 0 15px rgba(10, 10, 10, 0.3);
+          position: absolute;
+          top: 100px;
+          left: 1.25rem;
+          width: 100px;
+          height: 100px;
+
+        }
+
+        .card-custom-avatar .badge {
+            position: absolute;
+            top: 35%;
+            left: 125px; /* Ajuste este valor conforme necessário */
+            transform: translateY(-50%);
+            display: none;
+        }
+
+        .card-custom-avatar:hover .badge {
+            display: block; /* Mostra o badge quando o mouse passar sobre o .card-custom-avatar */
+        }
+
+
+    .titulo-div {
+        /* Caminho para a sua imagem de fundo */
+        background-image: linear-gradient(to right, transparent, #0A012F), url('/init/static/images/fundo_tops_01.png');
+        /* Repetição e posição da imagem de fundo */
+        background-repeat: no-repeat;
+        background-position: center center;
+        display: flex; /* Define a div como um container Flex */
+        justify-content: flex-end; /* Alinha os itens à direita */
+        align-items: center; /* Centraliza os itens verticalmente */
+        /*background: linear-gradient(to right, transparent, #4E29F8); /* Substitua 'cor1' e 'cor2' pelas cores desejadas */ 
+        border-radius: 10px; /* Ajuste este valor para o raio desejado dos cantos arredondados */
+        padding: 10px; /* Espaçamento interno para o título */
+        text-align: right; /* Centraliza o texto */
+        color: white; /* Cor do texto */
+        font-size: 2.5rem;
+        /* Outras propriedades de estilo, como font-size, podem ser adicionadas conforme necessário */
+    }
+
+
+
+    .titulo-div img {
+        margin-left: 10px; /* Espaçamento entre a imagem e o texto, se necessário */
+    }
+
+
+
+    </style>

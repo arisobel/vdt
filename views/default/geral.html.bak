@@ -1,0 +1,95 @@
+{{extend 'layout.html'}}
+<h1>Calendario Geral</h1>
+<div class='row-fluid'>
+    <input id='ano_calend' type="month" min="2022"  class='calend form-control col-md-2' value='{{=year}}-{{=str(month).zfill(2)}}'
+</div>
+
+{{ stl = "info" }}
+ {{ class_fundo = ""}}
+<div class='row'>
+    <div class='col-md-8'>
+
+    <table class='table table-bordered' id="mensal">
+          <tr>
+            <th width="90">Seg</td>
+            <th width="90">Ter</td>
+            <th width="90">Qua</td>
+            <th width="90">Qui</td>
+            <th width="90">Sex</td>
+            <th width="90">Sab</td>
+            <th width="90">Dom</td>
+          </tr>
+        {{ for semana in calend:}}
+            <tr>
+            {{ for dia in semana:}}
+              {{if dia:}}
+                {{ if dia in dias_feriados:}}
+                    {{ fer = dias_feriados[dia]['nome']}}
+                    {{ tipo = dias_feriados[dia]['tipo']}}
+                    {{ class_fundo = "fnd" }}
+
+                {{ else: }}
+                    {{ fer =''}}
+                    {{ class_fundo = "" }}
+                {{ pass }}
+                <td height="90px" class="{{=class_fundo }}">
+                    <span class="pull-right">
+                         {{if fer: }}
+                                    {{ if tipo =="JD":}}
+                                        {{ stl = "primary" }}
+                                    {{ pass }}
+                             <span class="badge badge-{{=stl}} ">
+                                 {{=fer.capitalize()}}
+                             </span>
+                         {{ pass }}
+                         <span class="badge badge-dark">
+                              {{=dia}}
+                         </span>
+
+                    </span>
+                    {{ if dia in dic_presenca:}}
+                        {{for k,v in dic_presenca[dia].items():}}
+                          <span class="aula-dia badge badge-{{=aulas.get(k,{}).get('cor','-')}}" 
+                                data-date="{{=year}}-{{=month}}-{{=dia}}"
+                                data-aula="{{=k}}"
+                          > 
+                                   {{=aulas.get(k,{}).get('aula','-')}} - {{=v}} 
+                          </span><br>
+                        {{ pass }}
+                    {{ pass }}
+
+                </td>
+             {{else:}}
+                <td></td>
+             {{pass}}
+
+            {{ pass }}
+            </tr>
+        {{ pass }}
+        </table>
+    </div>
+    <div class='col-md-4'>
+        <div id="dados-aula"> </div>
+    </div>
+</div>
+
+<script>
+$(".calend").on("change keyup", function(){
+    var ano = $("#ano_calend").val().replace("-","/");
+      // alert("ano " + ano + ", mes" + mes)
+       window.location = "{{=URL('default','geral')}}/"+ano;
+    })
+$(".aula-dia").on("click", function(){
+    var dia_aula =  $(this).attr("data-aula");
+    var dia =  $(this).attr("data-date");
+    var texto = "aula " + dia_aula + ", dia " + dia ;
+    
+    
+    
+    $("#dados-aula").html(texto);
+       //window.location = "{{=URL('default','geral')}}/"+ano;
+    
+    web2py_component("{{=URL('pessoa','lista_pessoas_dia')}}/?aula="+dia_aula+"&dia="+dia,"dados-aula");
+    
+    })
+</script>

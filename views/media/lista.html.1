@@ -1,0 +1,122 @@
+{{extend 'layout.html'}}
+
+   <div class="container">
+        <div class="row">
+            <!-- Cartão 1 -->
+
+
+
+{{ for card in lista:}}
+
+
+
+
+
+          <div class="col-md-6">
+                <div class="card">
+                    <div class="card-background"></div>
+                    <div class="fade-out"></div>
+                    <div class="row no-gutters">
+                        <div class="col-md-4">
+                            <img src="{{=URL('default','download', args=[card.palestrante.foto])}}"  class="card-img-square" alt="Imagem do Professor 1">
+                                <a class="btn btn-info btn-block" href="{{=URL('toca','index', args=[card.media_video.id])}}" target="_blank" >
+                                  Play <i class="icon icon-play bi bi-play"></i>
+                                </a>
+
+
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <span class="professor-name">{{=card.palestrante.nome}}</span>
+                                <a class="media-icon" href="{{=URL('toca','index', args=[card.media_video.id])}}" target="_blank" >{{=dic_icon[card.media_video.tipo_media]}}</a>
+                                <h4 class="card-title">{{=card.media_video.titulo  }}</h4>
+                                <h5 class="card-title">{{=card.categoria.nome  }}</h5>
+                                <p class="card-text">{{=card.media_video.resenha  }}</p>
+                                <div class="likes">{{=LOAD('toca','load_votes', args=[card.media_video.id], ajax=True) }} </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+{{ pass }}
+
+            <!-- Adicione mais cartões conforme necessário -->
+        </div>
+  </div>
+
+
+
+    <style>
+
+
+
+
+        .card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/init/default/download/conteudo.imagem.999b49ff02688e7e.bGlmZV9jaGFuZ2UucG5n.png') no-repeat center center/cover;
+            opacity: 0.6; /* Opacidade da imagem de fundo */
+            z-index: 0;
+        }
+
+        .fade-out {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to left, rgba(255,255,255,0), rgba(255,255,255,1)); /* Efeito de fade-out para a direita */
+            z-index: 1;
+        }
+
+        .card-img-square {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            max-height: 200px; /* Altura máxima para evitar que as imagens fiquem muito altas */
+            z-index: 2; /* Garante que a imagem do professor esteja acima do fundo */
+        }
+
+        .card-body {
+            position: relative;
+            z-index: 3; /* Garante que o conteúdo do card esteja acima do fundo */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Estilos CSS para a caixa de texto com altura máxima e rolagem */
+        .card-text {
+            max-height: 150px; /* Altura máxima desejada */
+            overflow-y: auto; /* Adiciona uma barra de rolagem vertical, se necessário */
+        }
+
+        /* Estilos CSS para destacar o nome do professor */
+        .professor-name {
+            font-weight: bold;
+            color: #007bff; /* Cor azul, você pode ajustar a cor conforme necessário */
+        }
+
+        /* Estilos CSS para o ícone do tipo de mídia */
+        .media-icon {
+            font-size: 24px; /* Tamanho do ícone */
+            margin-right: 5px; /* Espaçamento à direita */
+            color: #28a745; /* Cor verde, você pode ajustar a cor conforme necessário */
+        }
+
+        /* Estilos CSS para o espaço reservado aos "likes" */
+        .likes {
+            font-size: 18px; /* Tamanho do texto de "likes" */
+            color: #ff5722; /* Cor laranja, você pode ajustar a cor conforme necessário */
+        }
+    </style>

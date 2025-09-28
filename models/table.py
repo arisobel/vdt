@@ -1,0 +1,193 @@
+# -*- coding: utf-8 -*-
+
+# >>> db.define_table('mytable', Field('myfield', 'string'))
+#
+# Fields can be 'string','text','password','integer','double','boolean'
+#       'date','time','datetime','blob','upload', 'reference TABLENAME'
+# There is an implicit 'id integer autoincrement' field
+# Consult manual for more options, validators, etc.
+
+from datetime import datetime
+import os
+#from images import THUMB
+
+
+
+db.define_table('conteudo',
+                Field('tipo', 'string',requires=IS_IN_SET([("CR","Carrossel"),("MK","Marketing"),("FT","Featurette")])),
+                Field('lancado', 'datetime', default=datetime.now()),
+                Field('titulo', 'string'),
+                Field('resumo', 'text', requires=IS_LENGTH(160, error_message="Texto muito grande, max 160 caracteres.")),
+                Field('ordem', 'integer', default=99),
+                Field('texto', 'text'),
+                Field('link', 'string'),
+                Field('nova_guia', 'boolean', default=False),
+                # Field('imagem', 'upload', uploadfolder=os.path.join(request.folder, 'static/images/albums/image.file/')),
+                Field('imagem', 'upload'),
+                Field('tipo_imagem', requires=IS_IN_SET([("I","Imagem"),("V","Video")]), default="I"),
+                Field('thumbnail', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('icone', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('texto_botao', 'string'),
+                Field('alinhamento', 'string',requires=IS_IN_SET([("E","Esquerda"),("C","Centro"),("D","Direita")]), default="C"),
+                Field('ativo', 'boolean', default=True),
+                Field('redondo', 'boolean', default=True),
+                Field('tela_principal', 'boolean',default=False),
+                Field('texto_escuro', 'boolean', default=False),
+                )
+
+db.define_table('palestrante',
+                Field('nome', 'string'),
+                Field('celular', 'string'),
+                Field('bio', 'text'),
+                Field('foto', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                format='%(nome)s'
+                )
+db.palestrante.foto.represent = lambda value, row: IMG(_src=URL('static','files', args=value), _class="img-circle", _width="80", _HEIGHT="80"  ) if value else SPAN()
+
+db.define_table('categoria',
+                Field('nome', 'string', requires=IS_NOT_EMPTY()),
+                Field('nome_wa', 'string', requires=IS_NOT_EMPTY()),
+                Field('imagem', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('fundo', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('cor_fundo', 'string'),
+                format='%(nome)s (%(id)s)'
+                )
+
+db.define_table('tag',
+                Field('nome', 'string', requires=IS_NOT_EMPTY(), label='Tag'),
+                format='%(nome)s'
+                )
+
+
+#======================================
+tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
+icons_media = [("L","link"),("V","camera-video-fill"),("YT","youtube"),("A","mic-fill"),("S","spotify")]
+aprovacoes = [("P","Proposto"),("C","Curadoria"),("A","Aprovado")]
+idiomas = {"p":"Portugues","i":"Ingles","h":"Hebraico","e":"Espanhol","n":"Nenhuma"}
+
+
+db.define_table('media_video',
+                Field('lancado', 'datetime', default=datetime.now()),
+                Field('titulo', 'string', required=True, notnull=True, requires=IS_NOT_EMPTY()),
+                Field('resenha', 'text'),
+                Field('palestrante', db.palestrante),
+                Field('categoria', db.categoria),
+                Field('link', 'string'),
+                Field('tag_chave', db.tag, required=True),
+                Field('tags', 'list:reference tag', multiple=True),
+                Field('imagem', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('eh_top', 'boolean'),
+                Field('ciclo', 'string'),
+                Field('id_ref_media', 'string'),
+                Field('arquivo', 'upload', uploadfolder = os.path.join(request.folder, 'static/files/') , requires=IS_LENGTH(200*1024*1024)),
+                Field('tipo_media', requires=IS_IN_SET(tipos_media), default="L"),
+                Field('aprovacao', requires=IS_IN_SET(aprovacoes), default="L"),
+                Field('idioma', requires=IS_IN_SET(idiomas), default="p"),
+                Field('solicitar_legendas', 'boolean'),
+                Field('legendas_entregues', 'datetime'),
+                Field('legendas', requires=IS_IN_SET(idiomas), default="n"),
+                Field('duracao', requires=IS_IN_SET([("5","Até 5"),("15","entre 5 e 15"),("35","entre 15 e 35"),("36","Maior que 35")]), default="5"),
+                Field('minutes', 'integer'),
+                Field('criado_por', 'integer', label="user", default=auth.user_id),
+                )
+
+db.media_video._after_update.append(lambda s, f: atualiza_tags(s, f))
+db.media_video._after_insert.append(lambda s, i: cria_media_tags(s, i))
+
+
+
+db.define_table('media_tag',
+                Field('media_id', 'integer'),
+                Field('tag_id', 'integer'),
+                Field('ativo', 'boolean', default=True),
+                )
+                
+
+user_ip = request.client
+
+db.define_table('provavel_user',
+                Field('user_ip', 'string', default=user_ip),
+                Field('nome_user', 'string', lable="Nome"),
+                Field('criado_em', 'datetime', default=datetime.now()),
+                Field('ultimo_coment_em', 'datetime'),
+                format='%(user_ip)s - %(nome_user)s'
+                )
+
+
+db.define_table('vote_media',
+                Field('voter_ip', 'string', default=user_ip),
+                Field('media_id', 'integer', label="Shiur"),
+                Field('vote_type', 'string', lable="tipo"),
+                Field('ativo', 'boolean', default=True),
+                Field('vote_time', 'datetime', default=datetime.now()),
+                Field('user_id', 'integer', label="user", default=auth.user_id),
+                format='%(user_ip)s - %(nome_user)s'
+                )
+
+
+db.define_table('media_view',
+                Field('user_ip', 'string', default=user_ip),
+                Field('media_id', 'integer', label="Shiur"),
+                Field('view_time', 'datetime', default=datetime.now()),
+                Field('view_time_extension', 'integer'),
+                Field('user_id', 'integer', label="user", default=auth.user_id),
+                format='%(user_ip)s - %(nome_user)s'
+                )
+
+db.define_table('wa_group',
+                Field('group_name', 'string', label="Grupo"),
+                Field('group_id', 'string', label="Grupo"),
+                Field('descricao', 'text', label="Descrição"),
+                format='%(group_name)s'
+                )
+
+db.define_table('media_post',
+                Field('user_ip', 'string', default=user_ip),
+                Field('media_id', 'integer', label="Shiur"),
+                Field('msg_id', 'string', label="Id Msg Zap"),
+                Field('post_time', 'datetime', default=datetime.now()),
+                Field('wa_group', db.wa_group),
+                Field('user_id', 'integer', label="user", default=auth.user_id),
+                format='%(media_id)s - %(post_time)s'
+                )
+
+
+db.define_table('coment_media',
+                Field('media_id', 'integer'),
+                Field('user_ip', 'string', default=user_ip),
+                Field('nome_user', 'string', lable="Nome"),
+                Field('criado_em', 'datetime', default=datetime.now()),
+                Field('comentario', 'text'),
+                format='%(id)s'
+                )
+
+# Monta represents da tabela media_video
+dict_tipos_media =  {chave: valor for chave, valor in tipos_media} 
+dict_icons_media =  {chave: valor for chave, valor in icons_media} 
+db.media_video.tipo_media.represent = lambda value, row: CAT(SPAN(TAG.i(_class="bi bi-{}".format(dict_icons_media.get(value,"-"))), SPAN(dict_tipos_media.get(value,'-'),_class="ml-3 hidden-xs d-none d-sm-inline") ))
+
+
+dict_aprovacoes =   {chave: valor for chave, valor in aprovacoes} 
+db.media_video.aprovacao.represent = lambda value, row: dict_aprovacoes.get(value,'-')
+
+
+dict_tags = {r.id: r.nome for r in db(db.tag.id>0).select()}
+
+db.media_video.tags.represent = lambda value, row: CAT(*[SPAN(dict_tags.get(k,"-"), _class="badge badge-pill badge-secondary ml-1") for k in list(value or [])])
+#======================================
+
+linguas= [('pt','Portugues'),('es', 'Espanhol'), ('he', 'Hebraico')]
+
+
+db.define_table('legenda',
+                Field('lancado', 'datetime', default=datetime.now()),
+                Field('media_video', db.media_video),
+                Field('arquivo', 'upload', uploadfolder=os.path.join(request.folder, 'static/files/')),
+                Field('lingua',  requires=IS_IN_SET(linguas), default='pt_BR'),
+                Field('obs', 'string'),
+                )
+#from smthumbs import SMARTHUMB
+
+#box = (200, 200)
+
+#db.conteudo.thumbnail.compute = lambda row: SMARTHUMB(row.imagem, box)

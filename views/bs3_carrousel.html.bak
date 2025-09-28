@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../favicon.ico"> -->
+    <link rel="icon" href="{{=URL('static','images/logo_vdt_icone_tr.png')}}"> 
+    <link rel="canonical" href="https://getbootstrap.com/docs/3.4/examples/carousel/">
+
+    <title>{{=response.title or request.application}}</title>
+
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{=URL('static','plugins/bs3/bootstrap.min.css')}}" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Custom styles for this template -->
+	
+    <!-- Custom styles for this template -->
+    {{include 'web2py_ajax1.html'}} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
+    <link href="{{=URL('static','plugins/bs3/carousel.css')}}" rel="stylesheet">
+	
+	
+    {{block head}}{{end}}
+  </head>
+
+  <body>
+    
+    	
+    {{block menu}}{{end}}
+      
+
+
+	<main role="main">
+		{{block header}}
+		{{end}}
+		
+		{{block carousel}}
+		{{end}}
+		<!-- Main ========================================= -->
+		<!-- Begin page content -->
+		<div class="container--fluid main--container">
+		  {{include}}
+		  {{=response.toolbar() if response.show_toolbar else ''}}
+		</div>
+
+
+	  <!-- Marketing messaging and featurettes
+	  ================================================== -->
+	  <!-- Wrap the rest of the page in another container to center all the content. -->
+
+	  <div class="container marketing">
+        
+		<div id='sistemas'>
+		{{block marketing}}
+		{{end}}
+        </div>
+		<!-- START THE FEATURETTES -->
+
+		
+		<div id='destaques'>
+		{{block featurette}}
+		{{end}}
+		</div>
+		
+		<!-- /END THE FEATURETTES -->
+
+
+
+
+	  <!-- FOOTER -->
+	  <footer class="container">
+		<p class="float-right"><a href="#">Back to top</a></p>
+		<p>&copy; 2017-2021 Liondata &middot; <a href="#">Privacy</a> &middot; <div class="pull-right">לעילוי נשמת יהושוע בן יום טוב ליפא</div></p>
+	  </footer>
+	  </div><!-- /.container -->
+	</main>
+
+
+    <script>window.jQuery || document.write('<script src="{{=URL('static','plugins/bs3/bootstrap.min.js')}}"><\/script>')</script>
+    <script src="{{=URL('static','plugins/bs3/bootstrap.min.js')}}"></script>
+
+
+	{{block page_js}}{{end page_js}}
+
+	<style>
+        
+        .btn-vdt {
+            color: #000;
+            background-color: #f7dca6;
+            border-color: #fff0cf;
+        }
+
+        .btn-vdt:hover {
+            background-color: #f9c968 ;
+        }
+        
+        
+        {{block page_css}}{{end page_css}}
+    </style>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="js/bootstrap.bundle.min.js" ></script> -->
+      
+  </body>
+</html>

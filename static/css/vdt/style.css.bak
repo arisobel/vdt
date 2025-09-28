@@ -1,0 +1,28 @@
+/* para a votação */
+#voting-container {
+    display: inline-block;
+    text-align: center; /* Para centralizar os botões dentro do container */
+}
+
+#vote-button{
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+
+#voting-options {
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    display: none; /* Inicialmente oculto */
+}
+
+.vote-option {
+    display: block;
+    margin-bottom: 5px;
+    cursor: pointer;
+    background: none; /* Removendo estilos de fundo padrão */
+    border: none; /* Removendo borda padrão */
+    text-align: left; /* Alinhamento do texto e ícone à esquerda */
+}

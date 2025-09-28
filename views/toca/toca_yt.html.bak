@@ -1,0 +1,177 @@
+{{extend 'layout.html'}}
+<h1>This is the toca/toca_yt.html template</h1>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
+
+<div id="youtube-player"></div>
+<br>
+<div id="subtitles"></div>
+
+
+<script>
+let player;
+
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('youtube-player', {
+    height: '360',
+    width: '640',
+    videoId: 'kCIWFI0ZPo0', // Replace with your YouTube video ID
+    events: {
+      'onStateChange': onPlayerStateChange
+    }
+  });
+}
+    
+    
+   // init/uploads/legenda.arquivo.86a1a5e2935ae922.MjAyNDAxMjIxMzM2MDAzNzQuc3J0.srt
+   
+    
+    
+function onPlayerStateChange(event) {
+  if (event.data == YT.PlayerState.PLAYING) {
+      
+    var arquivo = "legenda.arquivo.86a1a5e2935ae922.MjAyNDAxMjIxMzM2MDAzNzQuc3J0.srt";
+    // Video is played, increment your counter or perform other actions
+    console.log('Video Played');
+                   
+    loadSubtitles(arquivo);
+      
+    // Video is played, start interval to log time every second
+    timeUpdateInterval = setInterval(playYTvideo, 400);
+  } else {
+    // Video is not playing, clear the interval
+    clearInterval(timeUpdateInterval);
+  }
+}
+
+function playYTvideo() {
+  let currentTime = player.getCurrentTime();
+  console.log('Current Time: ' + currentTime + ' seconds');
+  var subtitlesDiv = $('#subtitles');
+    
+    for (var i = 0; i < subtitles.length; i++) {
+        if (currentTime >= parseTime(subtitles[i].startTime) && currentTime <= parseTime(subtitles[i].endTime)) {
+            var lgd = subtitles[i].text;
+            //console.log(lgd);
+            console.log(lgd);
+            subtitlesDiv.text(lgd);
+            return;
+        }
+    }
+    
+}
+    
+    
+            function loadSubtitles(arquivo) {
+            //debugger;
+            var partesDoCaminho = arquivo.toUpperCase().split('.');
+
+            // Pega a última parte resultante (que deve ser a extensão do arquivo)
+            var extensaoDoArquivo = partesDoCaminho[partesDoCaminho.length - 1];
+
+
+
+                    var arq = "{{=URL('init','upload')}}/" + arquivo ,
+                    const subtitles =  parseSubtitles(arq, extensaoDoArquivo);
+
+            }
+
+            // Analisar legendas SRT
+            function parseSubtitles(arq, extensaoDoArquivo) {
+                var subtitles = [];
+                var lines = data.split('\n');
+                var startTime, endTime, text;
+
+                const indexRegex = /^\d+/   ;
+
+                var timeRegex = /(?<start>\d{2}:\d{2}:\d{2}\.\d{3})\s-->\s(?<end>\d{2}:\d{2}:\d{2}\.\d{3})/;
+
+                //debugger;
+                if(extensaoDoArquivo=="SRT"){
+                    var timeRegex = /(?<start>\d{2}\:\d{2}\:\d{2},\d{3})\s-->\s(?<end>\d{2}\:\d{2}\:\d{2},\d{3})/;
+                }else if(extensaoDoArquivo=="VTT"){
+                    var timeRegex = /(?<start>\d{2}:\d{2}:\d{2}\.\d{3})\s-->\s(?<end>\d{2}:\d{2}:\d{2}\.\d{3})/;
+                }
+
+                var currentLine = 0;
+                while(currentLine < lines.length - 1) {
+                    line = lines[currentLine];
+                    nextLine = lines[currentLine + 1];
+
+                    //debugger;
+                    if(extensaoDoArquivo=="SRT"){
+                        indexMatch = line.match(indexRegex);
+                        timeMatch = nextLine.match(timeRegex);
+
+
+                        if ((indexMatch) && (timeMatch)) {
+                            startTime = timeMatch[1];
+                            endTime = timeMatch[2];
+                            text = "";
+                            currentLine += 1;
+                            nextTextIndex = currentLine + 1;
+                            nextTextLine = lines[nextTextIndex];
+                            while (nextTextLine.trim() !== '') {
+                                text = text + (text.length > 0 ? '\n' : '') + nextTextLine;
+                                nextTextIndex += 1;
+                                nextTextLine = lines[nextTextIndex];
+                                currentLine += 1;
+                            }
+
+                            subtitles.push(
+                                {
+                                    startTime: startTime,
+                                    endTime: endTime,
+                                    text: text
+                                }
+                            );
+                        }
+                    }else if(extensaoDoArquivo=="VTT"){
+
+                        timeMatch = nextLine.match(timeRegex);
+
+
+                        if ((timeMatch)) {
+                            startTime = timeMatch[1];
+                            endTime = timeMatch[2];
+                            text = "";
+                            currentLine += 1;
+                            nextTextIndex = currentLine + 1;
+                            nextTextLine = lines[nextTextIndex];
+                            while (nextTextLine.trim() !== '') {
+                                text = text + (text.length > 0 ? '\n' : '') + nextTextLine;
+                                nextTextIndex += 1;
+                                nextTextLine = lines[nextTextIndex];
+                                currentLine += 1;
+                            }
+
+                            subtitles.push(
+                                {
+                                    startTime: startTime,
+                                    endTime: endTime,
+                                    text: text
+                                }
+                            );
+                        }
+
+                    }
+
+                    currentLine += 1;
+                }
+
+                return subtitles;
+            }
+    
+            // Função auxiliar para converter o formato de tempo das legendas
+            function parseTime(timeString) {
+                var parts = timeString.split(':');
+                var hours = parseInt(parts[0], 10);
+                var minutes = parseInt(parts[1], 10);
+                var seconds = parseFloat(parts[2].replace(',', '.'));
+                return hours * 3600 + minutes * 60 + seconds;
+            }
+
+
+    
+</script>

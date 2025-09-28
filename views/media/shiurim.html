@@ -1,0 +1,577 @@
+{{extend 'layout.html'}}
+
+
+{{block head}}
+    <link rel="stylesheet" href="{{ =URL('static', 'plugins/chosen', args=['chosen.css']) }}">
+    <link rel="stylesheet" href="{{ =URL('static', 'css', args=['jquery-ui.css']) }}">
+{{end}}
+
+
+
+{{block page_js}}
+    <script src="{{=URL('static','plugins/chosen', args=['chosen.jquery.min.js'])}}"></script>
+    <script src="{{=URL('static','js', args=['jquery-ui.min.js'])}}"></script>
+    <script src="{{=URL('static','js', args=['jquery.ui.touch-punch.min.js'])}}"></script>
+
+{{end page_js}}
+
+<!--
+<div class='row'>
+    <textarea class='col-md-8'>
+
+        {{=ult_sql}}
+
+    </textarea>
+</div>
+-->
+
+
+<div id="quadro">
+    <div class='row'>
+		<div class='col-md-10'>
+			<div class='row'>
+				<div class='col-md-6'>
+					<div class="wrapper form-group">
+					  <label class="label"><b>Palestrante:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
+					  <select class="form-control" id='palests' multiple>
+						{{ for palest in db_palestrantes:}}
+						  <option value="{{=palest.id}}" {{='selected' if str(palest.id) in palests else '' }}>{{=palest.nome}}</option>
+						{{ pass }}
+					  </select>
+
+					</div>
+				</div>
+				<div class='col-md-6'>
+					<div class="wrapper">
+					  <label class="label"><b>Categoria:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
+					  <select id='categs'  class="form-control" multiple>
+						{{ for categ in db_categorias:}}
+						  <option value="{{=categ.id}}"  {{='selected' if str(categ.id) in categs else '' }}>{{=categ.nome}}</option>
+						{{ pass }}
+					  </select>
+					</div>
+				</div>
+		    </div>
+			<div class='row'>
+				<div class='col-md-8'>
+					<div class="wrapper">
+					  <label class="label"><b>Tag:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
+					  <select id='tags'  class="form-control" multiple>
+                        {{dict_tags = {} }}
+						{{ for tag in db_tags:}}
+                          {{dict_tags.update({tag.id:tag.nome}) }}
+						  <option value="{{=tag.id}}" {{='selected' if str(tag.id) in tags else '' }} >{{=tag.nome}}</option>
+						{{ pass }}
+					  </select>
+					</div>
+				</div>
+				<div class='col-md-4'>
+					<div class="wrapper">
+					  <label class="label"><b>Desde:</b></label> <i id="erase-date" class="bi-x-square-fill chosen-toggle deselect"></i>
+					  <input id='desde'  class="form-control date" type="text" value="{{=request.vars.desde.replace('-', '/') if request.vars.desde else ''}}"}>
+					</div>
+                    <br>
+
+				</div>
+			</div>
+            {{ if     ( "search" in request.vars)  or  ( "minutos" in request.vars)  : }}
+               {{ stl = "display:flex;" }}
+            {{ else: }}
+               {{ stl = "display:none;" }}
+            {{ pass }}
+            
+            <div class="row filtro-avancado" style="{{=stl}}">
+                
+                <div class='col-md-3'>
+                    <label for="chave">Palavra Chave:</label>
+                    <input type="text" id="chave" value="{{=search or ''}}" class="form-control baixo">
+                </div>
+                
+                <div class='col-md-5'>
+                    <span class="d-none d-sm-block">Selecione range de minutos:<br><br></span>
+                    <div id="slider-range"></div><br>
+                </div>
+
+                <div class='col-md-3'>
+                    <label for="minutos">Minutos:</label>
+                    <input type="text" id="minutos" class="form-control" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                </div>
+
+            </div>
+			<div class='row'>
+				<div class='col-md-12'>
+					<div class="wrapper">
+					 <span id="filtra" class="btn btn-info"><span class="d-none d-sm-block pull-left">Filtrar</span><i class="bi bi-funnel-fill"></i></span>
+                     <a id="zera" href="{{=URL('media','shiurim')}}" class="btn btn-secondary"><span class="d-none d-sm-block pull-left">Limpar</span> <i class="bi bi-x-circle-fill"></i></a>
+                     <span id="avanc" class="btn btn-secondary"><span class="d-none d-sm-block pull-left">Filtro Avançado</span><i class="bi bi-filter"></i></span>
+                     {{len_its = len(listagem)}}
+                     <span id="ret-its" >{{=len_its}} Ite{{="ns" if len_its >1 else "m"}}</span>
+					</div>
+                </div>
+            </div>
+		</div>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="row ">
+        
+   {{ for card in listagem :}}
+        
+         <div class="col-md-4">
+                  <div class="card card-rav" data-id="{{=card.media_video.id}} ">
+                    <div class="row ">
+
+                      <div class="col-xs-7 col-sm-7">
+                        <div class="card-block pull-left">
+                          <span class='titulo'>{{=card.media_video.titulo }} </span><br>
+                          <b><span class='categ-'>{{=card.categoria.nome }} </span></b><br>
+                          {{if card.media_video.minutes:}}
+                              <span>{{=card.media_video.minutes or '' }} min </span>
+                          {{ pass }}
+                          <span>em {{=card.media_video.lancado.strftime("%d/%m/%Y %H:%M") }} </span><br>
+                          {{ if card.media_video.tags:}}
+                             {{ for tag in card.media_video.tags:}}
+                               {{estilo_tag = "secondary" if str(tag) not in tags else "primary" }}
+                               <span class="badge badge-pill badge-{{=estilo_tag}} ml-1">{{=dict_tags.get(tag,"-")}}</span>
+                            {{ pass }}
+                          {{ pass }}
+                          <div class="pull-right">
+                               {{=LOAD(c='toca',f='load_views', args=[card.media_video.id], ajax=True ) }}
+                            </div>
+                         
+                        </div>
+                      </div>
+
+                      <div class="col-xs-5 col-sm-5">
+                        <div class="image-container pull-right">
+                        <img class="d-block foto-rav" src="{{=URL('static','files', args=[card.palestrante.foto])}}" alt="">
+                        <div class="overlay"></div>
+                        <div class="play-icon"></div>
+                        <div class="rodape-imagem">{{=card.palestrante.nome}}</div> <!-- Novo elemento para o texto -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+          </div>
+        {{ pass }}
+      </div>
+</div>
+
+ 
+ <br>
+<br>
+ 
+
+<!--
+<div class="container py-3">
+  <div class="title h1 text-center">Horizontal cards - Bootstrap 4</div>
+  <!-- Card Start -->
+ <!-- 
+  <div class="card">
+    <div class="row ">
+
+      <div class="col-md-7 px-3">
+        <div class="card-block px-6">
+          <h4 class="card-title">Horizontal Card with Carousel - Bootstrap 4 </h4>
+          <p class="card-text">
+            The Carousel code can be replaced with an img src, no problem. The added CSS brings shadow to the card and some adjustments to the prev/next buttons and the indicators is rounded now. As in Bootstrap 3
+          </p>
+          <p class="card-text">Made for usage, commonly searched for. Fork, like and use it. Just move the carousel div above the col containing the text for left alignment of images</p>
+          <br>
+          <a href="#" class="mt-auto btn btn-primary  ">Read More</a>
+        </div>
+      </div>
+      <!-- Carousel start -->
+      <!-- 
+      <div class="col-md-5">
+        <div id="CarouselTest" class="carousel slide" data-ride="carousel">
+          <ol class="carousel-indicators">
+            <li data-target="#CarouselTest" data-slide-to="0" class="active"></li>
+            <li data-target="#CarouselTest" data-slide-to="1"></li>
+            <li data-target="#CarouselTest" data-slide-to="2"></li>
+
+          </ol>
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <img class="d-block" src="https://picsum.photos/450/300?image=1072" alt="">
+            </div>
+            <div class="carousel-item">
+              <img class="d-block" src="https://picsum.photos/450/300?image=855" alt="">
+            </div>
+            <div class="carousel-item">
+              <img class="d-block" src="https://picsum.photos/450/300?image=355" alt="">
+            </div>
+            <a class="carousel-control-prev" href="#CarouselTest" role="button" data-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+            <a class="carousel-control-next" href="#CarouselTest" role="button" data-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
+          </div>
+        </div>
+      </div>
+      <!-- End of carousel -->
+   <!-- 
+    </div>
+  </div>
+  <!-- End of card -->
+<!-- 
+</div>
+-->
+
+{{ block style }}
+
+.title {
+ 
+    margin-bottom: 50px;
+    text-transform: uppercase;
+}
+
+.card-block {
+    font-size: 1em;
+    position: relative;
+    margin: 0;
+    padding: 1em;
+    border: none;
+    border-top: 1px solid rgba(34, 36, 38, .1);
+    box-shadow: none;
+     
+}
+.card-rav {
+  @media only screen and (max-width: 991px)  {
+            width: 100%;
+    };
+  transition: box-shadow 0.2s ease; /* Adiciona uma transição suave para a sombra */
+
+}
+
+
+
+
+.form-group {
+    margin-bottom: 0.3rem;
+}
+
+
+.baixo {
+    margin-bottom: 20px; /* Altere '20px' para o valor desejado */
+}
+
+
+.card {
+    font-size: 1em;
+    overflow: hidden;
+    padding: 5;
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px 0 #d4d4d5, 0 0 0 1px #d4d4d5;
+    margin-top:20px;
+}
+
+.carousel-indicators li {
+    border-radius: 12px;
+    width: 12px;
+    height: 12px;
+    background-color: #404040;
+}
+.carousel-indicators li {
+    border-radius: 12px;
+    width: 12px;
+    height: 12px;
+    background-color: #404040;
+}
+.carousel-indicators .active {
+    background-color: white;
+    max-width: 12px;
+    margin: 0 3px;
+    height: 12px;
+}
+.carousel-control-prev-icon {
+ background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E") !important;
+}
+
+.carousel-control-next-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E") !important;
+}
+ lex-direction: column;
+}
+
+.btn {
+  margin-top: auto;
+}
+
+#ret-its{
+  margin-left: 7px;
+}
+
+.foto-rav {
+
+        width: 150px; /* Largura desejada da imagem */
+        height: 150px; /* Altura desejada da imagem */
+        object-fit: cover; /* Garante que a imagem cubra todo o espaço */
+        overflow: hidden; /* Esconde qualquer conteúdo que exceda o contêiner */
+
+
+}
+
+.foto-rav {
+  @media only screen and (min-width: 768px) and (max-width: 991px) {
+        width: 25px; /* Largura desejada da imagem */
+        object-fit: cover; /* Garante que a imagem cubra todo o espaço */
+        overflow: hidden; /* Esconde qualquer conteúdo que exceda o contêiner */
+    }
+
+}
+
+
+.image-container {
+  position: relative;
+}
+
+.play-icon {
+  position: absolute;
+  top: 50%; 
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
+  background-image: url('{{=URL('static','images', args=['play-icon.png'])}}');
+  background-size: cover;
+  display: none;
+}
+
+
+.play-icon {
+
+  @media only screen (max-width: 991px) {
+          position: absolute;
+          top: 50%; 
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 25px; /* Adjust size as needed */
+          height: 25px; /* Adjust size as needed */
+          background-image: url('{{=URL('static','images', args=['play-icon.png'])}}');
+          background-size: cover;
+          display: none;
+    }
+
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Cor preta com 50% de transparência */
+  display: none;
+}
+
+.card.card-rav:hover .overlay,
+.card.card-rav:hover .play-icon {
+  display: block;
+}
+
+
+.card-rav:hover {
+    box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.5); /* Adiciona sombra no hover */
+}
+
+.card-block .titulo {
+    word-break: break-word; /* Quebra a linha conforme necessário */
+    text-align: left; /* Alinha o texto à esquerda */
+}
+
+
+#quadro {
+    border-radius: 10px; /* Bordas arredondadas */
+    background-color: #ffad58; /* Fundo azul */
+    padding: 0.5cm; /* Espaçamento interno de 0.5 centímetro */
+    background-image: url('{{=URL('static','images', args=['busca_lupa.png'])}}'); /* Imagem de fundo */
+    background-repeat: no-repeat; /* A imagem não se repete */
+    background-position: right center; /* Alinha a imagem à direita */
+    background-size: contain; /* Ajusta o tamanho da imagem para caber na div */
+
+}
+
+
+
+
+
+.-card-rav::before {
+
+    content: "";
+    /*position: absolute;*/
+    top: 0;
+    right: -50%; /* Ajuste a posição da faixa à direita */
+    width: 140%; /* Ajuste a largura para cobrir toda a div */
+    height: 100%;
+    background-image: linear-gradient(to bottom right, transparent 50%, black 50%);
+    z-index: 1;
+    transform: skewY(45deg); /* Inclinação da faixa */
+
+}
+
+
+.ui-slider-range {
+    background: #f6931f; /* Sua cor preferida */
+}
+
+
+
+
+.-selecao {
+    position: absolute;
+    top: 10%;
+    left: 90%; /* Ajuste a posição do texto para a direita */
+    transform: translate(-50%, -50%) rotate(45deg); /* Rotação para ajustar ao ângulo da faixa */
+    color: white; /* Cor do texto */
+    font-size: 18px; /* Tamanho da fonte */
+    z-index: 2; /* Para garantir que o texto esteja acima da faixa */
+}
+
+
+.rodape-imagem {
+    position: absolute;
+    bottom: 0; /* Posicionado no fundo do contêiner */
+    width: 100%; /* Largura para cobrir toda a largura da imagem */
+    background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente (opcional) */
+    color: white; /* Cor do texto */
+    text-align: center; /* Alinha o texto ao centro */
+    padding: 5px; /* Espaçamento interno para o texto */
+}
+
+
+{{ end style }}
+
+
+{{ block script }}
+
+$('#palests').chosen({
+  width: "100%"
+})
+
+
+$('#erase-date').on('click', function(){
+    $("#desde").val('');
+})
+
+
+
+/*.on('change', function() {
+    // Find the chosen container
+    var chosenContainer = $(this).next('.chosen-container');
+    
+    // Add a custom class to each selected choice
+    chosenContainer.find('.search-choice').addClass('badge');
+});
+*/
+
+$('#categs').chosen({
+  width: "100%"
+})
+
+$('#tags').chosen({
+  width: "100%"
+})
+
+$('.chosen-toggle').each(function(index) {
+  console.log(index);
+  $(this).on('click', function() {
+    console.log($(this).parent().find('option').text());
+    $(this).parent().find('option').prop('selected', $(this).hasClass('select')).parent().trigger('chosen:updated');
+  });
+});
+
+$("#filtra").on('click', function(){
+
+
+    var categsValues = $("#categs").val()
+    var palestsValues = $("#palests").val()
+    var tagsValues = $("#tags").val()
+    var desde = $("#desde").val()
+    var minutos = $("#minutos").val()
+    var palavra_chave = $("#chave").val()
+
+    // Construct the base URL
+    var baseUrl = "{{=URL('media','shiurim')}}";
+
+    // Construct query parameters
+    var queryParamsCateg = categsValues.map(function(value) {
+        return "categ=" + value;
+    }).join('&');
+
+
+
+    // Construct query parameters
+    var queryParamsPalest = palestsValues.map(function(value) {
+        return "palest=" + value;
+    }).join('&');
+
+    // Construct query parameters
+    var queryParamsTags = tagsValues.map(function(value) {
+        return "tag=" + value;
+    }).join('&');
+
+    // Construct query parameters
+    var queryParamsTags = tagsValues.map(function(value) {
+        return "tag=" + value;
+    }).join('&');
+
+
+    // Construct the full URL
+    var fullUrl = baseUrl + '?' + queryParamsCateg + '&' + queryParamsPalest  + '&' + queryParamsTags;
+
+
+    if(desde){
+        var param_desde = desde.replace(/\//g, "-");
+        fullUrl = fullUrl + '&desde=' + param_desde;
+    }
+
+
+
+    if(palavra_chave){
+        var param_chave = palavra_chave;
+        fullUrl = fullUrl + '&search=' + param_chave;
+    }
+
+    fullUrl = fullUrl + '&minutos=' + minutos;
+
+    // Redirect to the new URL
+    window.location.href = fullUrl;
+
+
+
+
+})
+
+$("#avanc").on("click", function(){
+    $(".filtro-avancado").toggle('250');
+})
+
+$('.card-rav').dblclick(function() {
+    // Coloque aqui o código que você deseja executar no clique duplo
+    var shiur_id = $(this).attr('data-id');
+    //alert(shiur_id);
+    window.location.href = "{{=URL('toca','index')}}" + "/" + shiur_id ;
+});
+
+
+$(function() {
+  $("#slider-range").slider({
+    range: true,
+    min: 0,
+    max: 100,
+    values: [{{=min_minuto}}, {{=minuto_max}}],
+    slide: function(event, ui) {
+      $("#minutos").val(ui.values[0] + "-" + ui.values[1]);
+    }
+  });
+  $("#minutos").val($("#slider-range").slider("values", 0) +
+    "-" + $("#slider-range").slider("values", 1));
+});
+
+
+{{ end script }}

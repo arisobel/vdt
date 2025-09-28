@@ -1,0 +1,7 @@
+{{extend 'layout.html'}}
+
+<div class="container">
+    <h1>{{=tit.capitalize()}}</h1>
+    {{=grid}}
+    
+</div>

@@ -1,0 +1,142 @@
+# -*- coding: utf-8 -*-
+from datetime import datetime
+import calendar
+
+@auth.requires_login()
+def index():
+    if request.args(1):
+        year, month = int(request.args(1)), int(request.args(2))
+    else:
+        year, month =datetime.today().year, datetime.today().month
+
+    id_pess = request.args(0)
+    presenca_mes = None
+    dic_presenca = {}
+    dias_feriados = {}
+    pessoa = db(db.auth_user.id == id_pess).select().first()
+    os_meses = {1:'Jan', 2:'Fev', 3:'Mar', 4:'Abr', 5:'Mai', 6:'Jun', 7:'jul', 8:'Ago', 9:'Set', 10:'Out', 11:'Nov', 12:'Dez'}
+    calend = calendar.monthcalendar(year, month)
+    anos = [n for n in range((int(year)-2),int(year+1))]
+    meses = [n for n in range(1,13)]
+
+    # monta im dicionario com as aulas e os dias presentes
+    periodos = {p:[] for p in  pessoa['aulas']}
+
+    if id_pess:
+        form = SQLFORM(db.auth_user,id_pess)
+        presenca_mes = db((db.presenca.pessoa == id_pess)&(db.presenca.dia.year()==year)&(db.presenca.dia.month()==month)).select()
+        for p in presenca_mes:
+            dia = p.dia.day
+            aula= p.aula
+            if aula not in periodos:
+                periodos[aula]= []
+            periodos[aula].append(dia)
+            if dia not in dic_presenca:
+                dic_presenca[dia]={}
+            dic_presenca[dia][aula]=p.horario
+    else:
+        form = SQLFORM(db.auth_user)
+
+    if form.process().accepted:
+        response.flash = 'form accepted'
+    elif form.errors:
+        response.flash = 'form has errors {}'.format(", ".join(form.errors) )
+
+    return dict(
+                  form=form,
+                  presenca_mes=presenca_mes,
+                  calend = calend,
+                  dic_presenca=dic_presenca,
+                  id_pess=id_pess,
+                  year=year,
+                  month=month,
+                  anos=anos,
+                  meses=meses,
+                  os_meses=os_meses,
+               )
+
+@auth.requires_login()
+def calend():
+    id_pess = request.args(0)
+    year_r = request.args(1)
+    day_r = request.args(2)
+    year, month =int(year_r) or datetime.today().year, int(day_r) or datetime.today().month
+    calend = calendar.monthcalendar(year, month)
+    dic_presenca = {}
+    dic_aulas = {}
+    tot_dias = {}
+    dias_feriados = {}
+    w_days=['Seg', 'Ter', 'Qua', 'Qui','Sex', 'Sab','Dom']
+    pessoa = db(db.auth_user.id == id_pess).select().first()
+    aulas = {r['id']:{'aula':r['nome'],'cor':r['cor'], 'hor':r['horario'], 'fim':r['fim'], 'dias':[int(s) for s in r['dias'].split(",")], 'executadas':0} for r in db(db.aula).select()}
+
+    # feriados
+    feriados_db = db((db.feriado.data_feriado.year()==year)&(db.feriado.data_feriado.month()==month)).select()
+    fj, fl = [],[]
+    if feriados_db:
+        dias_feriados = {}
+        for f in feriados_db:
+            dia = int(f.data_feriado.day)
+            dias_feriados[dia]=f
+
+            if f.tipo=="JD":
+                fj.append(dia)
+            else:
+                fl.append(dia)
+
+    # monta im dicionario com as aulas e os dias presentes
+    periodos = {p:[] for p in  pessoa['aulas']}
+
+
+    presenca_mes = db((db.presenca.pessoa == id_pess)&(db.presenca.dia.year()==year)&(db.presenca.dia.month()==month)).select()
+    for p in presenca_mes:
+        dia = p.dia.day
+        dia_sem = p.dia.weekday()
+        aula= p.aula
+        #if dia not in tot_dias:
+        #    tot_dias[dia]=dia_sem
+        if aula not in dic_aulas:
+            if aula not in aulas:
+                aulas[aula] = {}
+            dias_aula =  aulas[aula].get('dias',[])
+            aulas_esperadas = calc_dias_uteis(year, month, fj=fj, fl=fl, dias_aula=dias_aula)
+            aulas[aula]['esperadas'] = aulas_esperadas
+            for d in aulas_esperadas:
+                if d not in tot_dias:
+                    tot_dias[d] = aulas_esperadas[d]
+            dic_aulas[aula]={a:{} for a in aulas_esperadas}
+        if dia not in dic_presenca:
+            dic_presenca[dia]={}
+        dic_presenca[dia][aula]=p.horario
+        dic_aulas[aula][dia]=p.horario
+
+    return dict(
+                  presenca_mes=presenca_mes,
+                  calend = calend,
+                  dic_presenca=dic_presenca,
+                  aulas=aulas,
+                  year=year,
+                  month=month ,
+                  periodos=periodos,
+                  dias_feriados=dias_feriados,
+                  pessoa=pessoa,
+                  dic_aulas=dic_aulas,
+                  tot_dias = {d:tot_dias[d] for d in sorted(tot_dias)},
+                  w_days=w_days,
+               )
+
+def lista_pessoas_dia():
+    aula = request.vars.aula
+    dia = request.vars.dia
+    tbl=TABLE(_class='table')
+    lista = db((db.presenca.aula==aula)&(db.presenca.dia==dia)).select()
+
+    for p in lista.render():
+        linha = TR()
+        pessoa = p['pessoa']
+        hr = p['horario']
+        linha.append(TD(pessoa))
+        linha.append(TD(hr))
+        tbl.append(linha)
+
+    return tbl

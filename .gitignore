@@ -1,0 +1,26 @@
+# Arquivos de Compilação do Python
+##################################
+*.pyc
+__pycache__/
+
+# web2py - Pastas de Log e Sessão (INCLUI ERROS)
+#################################
+logs/        # <-- Esta linha ignora todos os logs, incluindo os de erro.
+sessions/
+errors/
+
+# web2py - Banco de Dados (SQLite)
+#################################
+*.sqlite
+*.db
+
+# web2py - Arquivos de Upload e Mídia
+####################################
+uploads/
+private/
+applications/*/uploads/
+
+# web2py - Arquivos de Cache
+##############################
+applications/*/compiled/
+applications/*/cache/

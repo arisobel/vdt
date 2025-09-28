@@ -1,0 +1,127 @@
+{{extend 'bs4_carrousel.html'}}
+
+  {{block carousel}}
+  <div id="myCarousel" class="carousel slide" data-ride="carousel">
+    <ol class="carousel-indicators">
+      
+      {{for i in range(len(crs)):}}
+        {{if i ==0:}}
+          <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+        {{else:}}
+          <li data-target="#myCarousel" data-slide-to="{{=i}}"></li>
+        {{pass}}
+
+      {{pass}}
+    </ol>
+    <div class="carousel-inner">
+      {{loops_cr=0}}
+      {{ for c in crs:}}
+        
+      <div class="carousel-item {{='active' if loops_cr==0 else''}}">
+        
+        {{if c.imagem:}}
+           <img src="{{=URL('default','download', args=c.imagem)}}" class="bd-placeholder-img" width="100%" height="100%" alt="Italian Trulli" role="img" >
+        
+        {{else:}}
+           <svg class="bd-placeholder-img" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label=" :  " preserveAspectRatio="xMidYMid slice" focusable="false"><title> </title><rect width="100%" height="100%" fill="#777"/><text x="50%" y="50%" fill="#777" dy=".3em"> </text></svg>  
+
+        {{pass}}
+
+        <div class="container">
+          {{if c.texto_escuro :}}
+              <div class="carousel-caption carousel-dark-text text-left">
+          {{else:}}
+              <div class="carousel-caption text-left">
+          {{pass}}
+            <h1>{{=c.titulo or ''}}</h1>
+            <p>{{=c.texto or ''}}</p>
+            <p><a class="btn btn-lg btn-primary" href="#">Sign up today</a></p>
+          </div>
+        </div>
+      </div>
+        {{loops_cr+=1}}
+      {{pass}}
+    </div>
+    <button class="carousel-control-prev carousel-control" type="button" data-target="#myCarousel" data-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="sr-only">Previous</span>
+    </button>
+    <button class="carousel-control-next carousel-control" type="button" data-target="#myCarousel" data-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="sr-only">Next</span>
+    </button>
+  </div>
+  {{ end }}
+
+
+
+  {{block marketing}}
+  <!-- Marketing messaging and featurettes
+  ================================================== -->
+  <!-- Wrap the rest of the page in another container to center all the content. -->
+
+    <!-- Three columns of text below the carousel -->
+    <div class="row">
+        
+      {{loops_mk=0}}
+      {{ for m in mkt: }}
+      <div class="col-lg-4">
+        
+        {{if m.thumbnail or m.imagem:}} 
+          {{img = m.thumbnail or m.imagem }}
+          {{ x =  "thumb" if m.thumbnail else "img" }}
+           <img src="{{=URL('default','download', args=img)}}" class="bd-placeholder-img rounded-circle" width="140" height="140" alt="Italian Trulli" role="img" >
+          <!--<img src="{{=URL('static','images/image.file/', args=img)}}" class="bd-placeholder-img rounded-circle" width="140" height="140" alt="Italian Trulli" role="img" > -->
+        
+        {{else:}}
+          
+          
+        <svg class="bd-placeholder-img rounded-circle" width="140" height="140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 140x140" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#777"/><text x="50%" y="50%" fill="#777" dy=".3em">140x140</text></svg>
+        {{ pass }}
+
+        <h2>{{=m.titulo or ''}}</h2>
+        <p>{{=m.resumo or m.texto or ''}}</p>
+        <p><a class="btn btn-secondary" href="#">View details &raquo;</a></p>
+      </div><!-- /.col-lg-4 -->
+      {{ pass }}
+    </div><!-- /.row -->
+      
+
+{{ end }}
+
+{{ block featurette }}
+    <hr class="featurette-divider">
+      {{left=True}}
+      {{ for f in ftr: }}
+
+
+    <div class="row featurette">
+      <div class='{{="col-md-7 order-md-2" if left else "col-md-7"}}'>
+        <h2 class="featurette-heading">{{=f.titulo or ''}}</h2>
+        <p class="lead">{{=f.texto or ''}}</p>
+      </div>
+      <div class="col-md-5">
+       {{if f.imagem:}} 
+           <img src="{{=URL('default','download', args=f.imagem)}}" class="bd-placeholder-img featurette-image img-fluid mx-auto" width="500" height="500" alt="Italian Trulli" role="img" >
+       {{ else: }}
+        <svg class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#eee"/><text x="50%" y="50%" fill="#aaa" dy=".3em">500x500</text></svg>
+       {{ pass }}
+      </div>
+    </div>
+
+    <hr class="featurette-divider">
+      {{ left = not left }}
+      {{ pass }}
+
+
+{{ end }}
+
+
+{{block page_js}}
+
+<script>
+    $(".carousel-control").css("opacity","0.1");
+
+</script>
+
+{{end page_js}}
