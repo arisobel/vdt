@@ -970,6 +970,139 @@ def kanban_add_card():
             'message': f'Erro interno: {str(e)}'
         })
 
+@auth.requires_login()
+def kanban_editores():
+    """
+    Kanban board view for distributing AT/TD cards to editors
+    """
+    # Check if current user has editores field set to True
+    if not auth.user or not auth.user.editores:
+        session.flash = "Acesso negado: Apenas editores podem visualizar o Kanban de Editores."
+        redirect(URL('default', 'index'))
+    
+    response.title = "Kanban - Distribuição de Editores"
+    
+    # Get cards with AT and TD status
+    campos = [
+        db.media_video.id,
+        db.media_video.titulo,
+        db.media_video.aprovacao,
+        db.media_video.tipo_media,
+        db.media_video.lancado,
+        db.media_video.editor_responsavel,
+        db.palestrante.nome,
+        db.categoria.nome,
+        db.auth_user.nome
+    ]
+    
+    # Filter for AT and TD cards only
+    videos = db((db.media_video.aprovacao == "AT") | (db.media_video.aprovacao == "TD")).select(
+        *campos,
+        left=[
+            db.palestrante.on(db.media_video.palestrante == db.palestrante.id),
+            db.categoria.on(db.media_video.categoria == db.categoria.id),
+            db.auth_user.on(db.media_video.editor_responsavel == db.auth_user.id)
+        ],
+        orderby=db.media_video.lancado
+    )
+    
+    # Get all editors (users with editores=True)
+    editores = db(db.auth_user.editores == True).select(
+        db.auth_user.id, 
+        db.auth_user.nome, 
+        orderby=db.auth_user.nome
+    )
+    
+    tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
+    
+    # Get categories and speakers for the modal form
+    categorias = db(db.categoria.id > 0).select(db.categoria.id, db.categoria.nome, orderby=db.categoria.nome)
+    palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
+    
+    # Group videos by editor assignment
+    kanban_data = {}
+    
+    # Unassigned column (no editor_responsavel)
+    kanban_data['unassigned'] = {
+        'name': 'Sem Editor Atribuído',
+        'videos': []
+    }
+    
+    # Create columns for each editor
+    for editor in editores:
+        kanban_data[f'editor_{editor.id}'] = {
+            'name': editor.nome,
+            'editor_id': editor.id,
+            'videos': []
+        }
+    
+    # Distribute videos into columns
+    for video in videos:
+        if video['media_video']['editor_responsavel']:
+            editor_key = f"editor_{video['media_video']['editor_responsavel']}"
+            if editor_key in kanban_data:
+                kanban_data[editor_key]['videos'].append(video)
+        else:
+            kanban_data['unassigned']['videos'].append(video)
+    
+    return dict(kanban_data=kanban_data, editores=editores, tipos_media=tipos_media,
+                categorias=categorias, palestrantes=palestrantes)
+
+@auth.requires_login()
+def kanban_editores_assign():
+    """
+    AJAX endpoint to assign/unassign editor to a video card
+    """
+    video_id = request.vars.video_id
+    editor_id = request.vars.editor_id
+    
+    # Validate input parameters
+    if not video_id:
+        return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
+    
+    try:
+        # Check if video exists and is AT or TD
+        video = db((db.media_video.id == video_id) & 
+                  ((db.media_video.aprovacao == "AT") | (db.media_video.aprovacao == "TD"))).select().first()
+        if not video:
+            return response.json({'success': False, 'message': 'Vídeo não encontrado ou não é AT/TD'})
+        
+        # If editor_id is provided, validate it's a real editor
+        if editor_id and editor_id.strip():
+            editor = db((db.auth_user.id == editor_id) & (db.auth_user.editores == True)).select().first()
+            if not editor:
+                return response.json({'success': False, 'message': 'Editor não encontrado'})
+            
+            # Assign editor
+            db(db.media_video.id == video_id).update(editor_responsavel=editor_id)
+            db.commit()
+            
+            return response.json({
+                'success': True, 
+                'message': f'Card atribuído ao editor {editor.nome}',
+                'video_id': video_id,
+                'editor_id': editor_id,
+                'editor_name': editor.nome
+            })
+        else:
+            # Unassign editor (set to None)
+            db(db.media_video.id == video_id).update(editor_responsavel=None)
+            db.commit()
+            
+            return response.json({
+                'success': True, 
+                'message': 'Editor removido do card',
+                'video_id': video_id,
+                'editor_id': None
+            })
+        
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
+
 def postar_wa():
 
     import requests
