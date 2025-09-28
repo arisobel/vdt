@@ -970,6 +970,49 @@ def kanban_add_card():
             'message': f'Erro interno: {str(e)}'
         })
 
+@auth.requires_login()
+def add_palestrante():
+    """
+    AJAX endpoint to add a new palestrante (speaker)
+    Requires user authentication
+    """
+    nome = request.vars.nome
+    
+    # Validate required field
+    if not nome or not nome.strip():
+        return response.json({'success': False, 'message': 'Nome do palestrante é obrigatório'})
+    
+    nome = nome.strip()
+    
+    # Check if palestrante already exists (case insensitive)
+    existing = db(db.palestrante.nome.lower() == nome.lower()).select().first()
+    if existing:
+        return response.json({
+            'success': True, 
+            'palestrante_id': existing.id,
+            'nome': existing.nome,
+            'message': 'Palestrante já existia'
+        })
+    
+    try:
+        # Insert new palestrante
+        palestrante_id = db.palestrante.insert(nome=nome)
+        db.commit()
+        
+        return response.json({
+            'success': True, 
+            'palestrante_id': palestrante_id,
+            'nome': nome,
+            'message': 'Palestrante adicionado com sucesso'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
+
 def postar_wa():
 
     import requests
