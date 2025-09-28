@@ -2,7 +2,7 @@
 
 {{block head}}
 <link rel="stylesheet" href="{{=URL('static','css/jquery-ui.css')}}"/>
-<link rel="stylesheet" href="{{=URL('static','plugins/chosen/chosen.css')}}"/>
+<link rel="stylesheet" href="{{=URL('static','plugins/bootstrap-select/bootstrap-select.min.css')}}"/>
 <style>
 .kanban-board {
     display: flex;
@@ -407,7 +407,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="cardCategory">Categoria</label>
-                                <select class="form-control" id="cardCategory" name="categoria">
+                                <select class="form-control selectpicker" id="cardCategory" name="categoria" data-live-search="true">
                                     <option value="">Selecione uma categoria</option>
                                     {{for categoria in categorias:}}
                                         <option value="{{=categoria.id}}">{{=categoria.nome}}</option>
@@ -419,7 +419,7 @@
                     
                     <div class="form-group">
                         <label for="cardSpeaker">Palestrante</label>
-                        <select class="form-control" id="cardSpeaker" name="palestrante">
+                        <select class="form-control selectpicker" id="cardSpeaker" name="palestrante" data-live-search="true">
                             <option value="">Selecione um palestrante</option>
                             {{for palestrante in palestrantes:}}
                                 <option value="{{=palestrante.id}}">{{=palestrante.nome}}</option>
@@ -429,7 +429,7 @@
                     
                     <div class="form-group">
                         <label for="cardEditor">Editor Responsável</label>
-                        <select class="form-control" id="cardEditor" name="editor_responsavel">
+                        <select class="form-control selectpicker" id="cardEditor" name="editor_responsavel" data-live-search="true">
                             <option value="">Nenhum editor atribuído</option>
                             {{for editor in editores:}}
                                 <option value="{{=editor.id}}">{{=editor.nome}}</option>
@@ -452,13 +452,14 @@
 </div>
 
 <script src="{{=URL('static','js/jquery-ui.min.js')}}"></script>
-<script src="{{=URL('static','plugins/chosen/chosen.jquery.min.js')}}"></script>
+<script src="{{=URL('static','plugins/bootstrap-select/bootstrap-select.min.js')}}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize chosen selectors for better UX
-    $('#cardSpeaker, #cardEditor, #cardCategory').chosen({
+    // Initialize bootstrap-select selectors for better UX
+    $('#cardSpeaker, #cardEditor, #cardCategory').selectpicker({
         width: '100%',
-        no_results_text: 'Nenhum resultado encontrado para'
+        liveSearch: true,
+        noneResultsText: 'Nenhum resultado encontrado para {0}'
     });
     
     // Make cards sortable between columns
@@ -552,8 +553,8 @@ function showAddCardModal(status, statusName) {
     $('#addCardModalLabel').text('Adicionar Novo Card - ' + statusName);
     $('#modalActionButton').text('Adicionar Card');
     
-    // Update chosen selectors
-    $('#cardSpeaker, #cardEditor, #cardCategory').trigger('chosen:updated');
+    // Update bootstrap-select selectors
+    $('#cardSpeaker, #cardEditor, #cardCategory').selectpicker('refresh');
     
     // Show modal
     $('#addCardModal').modal('show');
@@ -578,8 +579,8 @@ function editCard(videoId) {
                 $('#cardLink').val(response.data.link);
                 $('#selectedStatus').val(response.data.aprovacao);
                 
-                // Update chosen selectors
-                $('#cardSpeaker, #cardEditor, #cardCategory').trigger('chosen:updated');
+                // Update bootstrap-select selectors
+                $('#cardSpeaker, #cardEditor, #cardCategory').selectpicker('refresh');
                 
                 // Update modal title and button
                 $('#addCardModalLabel').text('Editar Card');
