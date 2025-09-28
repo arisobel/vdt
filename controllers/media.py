@@ -1095,7 +1095,11 @@ def kanban_editores_assign():
                 'video_id': video_id,
                 'editor_id': None
             })
+<<<<<<< HEAD
 
+=======
+#=======
+>>>>>>> 49a9f4a4cdb6f1d2fd477e2aed9895b62e96bbf1
 def add_palestrante():
     """
     AJAX endpoint to add a new palestrante (speaker)
@@ -1137,6 +1141,10 @@ def add_palestrante():
             'nome': nome,
             'message': 'Palestrante adicionado com sucesso'
         })
+<<<<<<< HEAD
+=======
+
+>>>>>>> 49a9f4a4cdb6f1d2fd477e2aed9895b62e96bbf1
         
     except Exception as e:
         db.rollback()
