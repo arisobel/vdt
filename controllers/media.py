@@ -126,7 +126,13 @@ def index():
                )
 
 
+@auth.requires_login()
 def cards():
+    # Check if current user has editores field set to True
+    if not auth.user or not auth.user.editores:
+        session.flash = "Acesso negado: Apenas editores podem visualizar os cartões."
+        redirect(URL('default', 'index'))
+    
     response.title = "Shiurim"
     categ = request.vars.categ or None
     paletrante = request.vars.palestr or None
