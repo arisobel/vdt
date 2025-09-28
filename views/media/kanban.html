@@ -2,6 +2,7 @@
 
 {{block head}}
 <link rel="stylesheet" href="{{=URL('static','css/jquery-ui.css')}}"/>
+<link rel="stylesheet" href="{{=URL('static','plugins/chosen/chosen.css')}}"/>
 <style>
 .kanban-board {
     display: flex;
@@ -467,6 +468,10 @@ function showAddCardModal(statusCode, statusName) {
     $('#addCardForm')[0].reset();
     $('#selectedStatus').val(statusCode); // Reset clears this, so set again
     $('#modalActionButton').text('Adicionar Card');
+    
+    // Update chosen selectors after reset
+    $('#cardSpeaker').trigger('chosen:updated');
+    
     $('#addCardModal').modal('show');
 }
 
@@ -489,6 +494,9 @@ function editCard(videoId) {
                 $('#cardEditor').val(response.data.editor_responsavel);
                 $('#cardLink').val(response.data.link);
                 $('#selectedStatus').val(response.data.aprovacao);
+                
+                // Update chosen selectors
+                $('#cardSpeaker').trigger('chosen:updated');
                 
                 // Update modal title and button
                 $('#addCardModalLabel').text('Editar Card');
@@ -624,6 +632,100 @@ function addNewCard() {
         },
         complete: function() {
             $('#modalActionButton').prop('disabled', false).text('Adicionar Card');
+        }
+    });
+}
+</script>
+
+<script src="{{=URL('static','plugins/chosen/chosen.jquery.min.js')}}"></script>
+<script>
+// Initialize Chosen for the palestrante select with tagging support
+$(document).ready(function() {
+    initChosenPalestrante();
+});
+
+function initChosenPalestrante() {
+    $('#cardSpeaker').chosen({
+        width: "100%",
+        placeholder_text_single: "Digite para pesquisar ou adicionar novo palestrante...",
+        no_results_text: "Nenhum resultado encontrado. Pressione Enter para adicionar",
+        allow_single_deselect: true
+    });
+
+    // Handle adding new palestrante when no results found
+    $('#cardSpeaker_chosen').on('keydown', '.search-field input', function(e) {
+        if (e.keyCode === 13) { // Enter key
+            var searchText = $(this).val().trim();
+            var $input = $(this);
+            
+            if (searchText) {
+                // Use a small delay to allow Chosen.js to process the search and show no-results
+                setTimeout(function() {
+                    var noResults = $('#cardSpeaker_chosen .no-results').is(':visible');
+                    var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
+                    
+                    // Check if there are no results visible or no active results
+                    if (noResults || activeResults === 0) {
+                        addNewPalestrante(searchText);
+                    }
+                }, 50); // Small delay to let Chosen.js update the DOM
+                
+                e.preventDefault(); // Always prevent form submission on Enter in search field
+            }
+        }
+    });
+}
+
+function addNewPalestrante(nome) {
+    if (!nome || nome.trim() === '') {
+        return;
+    }
+    
+    nome = nome.trim();
+    
+    // Clear the search field to avoid confusion
+    $('#cardSpeaker_chosen .search-field input').val('');
+    
+    // Show loading feedback
+    var $chosen = $('#cardSpeaker_chosen');
+    $chosen.addClass('chosen-disabled');
+    
+    $.ajax({
+        url: '{{=URL("media", "add_palestrante")}}',
+        method: 'POST',
+        data: { nome: nome },
+        success: function(response) {
+            if (response.success) {
+                // Check if option already exists
+                var existingOption = $('#cardSpeaker option[value="' + response.palestrante_id + '"]');
+                
+                if (existingOption.length === 0) {
+                    // Add new option to select
+                    var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
+                    $('#cardSpeaker').append(newOption);
+                } else {
+                    // Select existing option
+                    existingOption.prop('selected', true);
+                }
+                
+                // Update chosen
+                $('#cardSpeaker').trigger('chosen:updated');
+                
+                // Show success feedback
+                if (response.message === 'Palestrante já existia') {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" selecionado!');
+                } else {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" adicionado com sucesso!');
+                }
+            } else {
+                showFeedback('error', 'Erro ao adicionar palestrante: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão ao adicionar palestrante.');
+        },
+        complete: function() {
+            $chosen.removeClass('chosen-disabled');
         }
     });
 }

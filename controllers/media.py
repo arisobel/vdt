@@ -1095,6 +1095,49 @@ def kanban_editores_assign():
                 'video_id': video_id,
                 'editor_id': None
             })
+#=======
+def add_palestrante():
+    """
+    AJAX endpoint to add a new palestrante (speaker)
+    Requires user authentication
+    """
+    nome = request.vars.nome
+    
+    # Validate required field
+    if not nome or not nome.strip():
+        return response.json({'success': False, 'message': 'Nome do palestrante é obrigatório'})
+    
+    nome = nome.strip()
+    
+    # Additional validation
+    if len(nome) < 2:
+        return response.json({'success': False, 'message': 'Nome muito curto (mínimo 2 caracteres)'})
+    
+    if len(nome) > 100:
+        return response.json({'success': False, 'message': 'Nome muito longo (máximo 100 caracteres)'})
+    
+    # Check if palestrante already exists (case insensitive)
+    existing = db(db.palestrante.nome.lower() == nome.lower()).select().first()
+    if existing:
+        return response.json({
+            'success': True, 
+            'palestrante_id': existing.id,
+            'nome': existing.nome,
+            'message': 'Palestrante já existia'
+        })
+    
+    try:
+        # Insert new palestrante
+        palestrante_id = db.palestrante.insert(nome=nome)
+        db.commit()
+        
+        return response.json({
+            'success': True, 
+            'palestrante_id': palestrante_id,
+            'nome': nome,
+            'message': 'Palestrante adicionado com sucesso'
+        })
+
         
     except Exception as e:
         db.rollback()
