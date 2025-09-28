@@ -984,6 +984,13 @@ def add_palestrante():
     
     nome = nome.strip()
     
+    # Additional validation
+    if len(nome) < 2:
+        return response.json({'success': False, 'message': 'Nome muito curto (mínimo 2 caracteres)'})
+    
+    if len(nome) > 100:
+        return response.json({'success': False, 'message': 'Nome muito longo (máximo 100 caracteres)'})
+    
     # Check if palestrante already exists (case insensitive)
     existing = db(db.palestrante.nome.lower() == nome.lower()).select().first()
     if existing:

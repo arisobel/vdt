@@ -683,15 +683,27 @@ function addNewPalestrante(nome) {
         data: { nome: nome.trim() },
         success: function(response) {
             if (response.success) {
-                // Add new option to select
-                var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
-                $('#cardSpeaker').append(newOption);
+                // Check if option already exists
+                var existingOption = $('#cardSpeaker option[value="' + response.palestrante_id + '"]');
+                
+                if (existingOption.length === 0) {
+                    // Add new option to select
+                    var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
+                    $('#cardSpeaker').append(newOption);
+                } else {
+                    // Select existing option
+                    existingOption.prop('selected', true);
+                }
                 
                 // Update chosen
                 $('#cardSpeaker').trigger('chosen:updated');
                 
                 // Show success feedback
-                showFeedback('success', 'Palestrante "' + response.nome + '" adicionado com sucesso!');
+                if (response.message === 'Palestrante já existia') {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" selecionado!');
+                } else {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" adicionado com sucesso!');
+                }
             } else {
                 showFeedback('error', 'Erro ao adicionar palestrante: ' + response.message);
             }
