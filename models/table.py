@@ -71,7 +71,7 @@ aprovacoes = [("EP", "EM PROSPECÇÃO"),
               ("AC","Arquivado / Catalogado"),
               ("RC","Recusado | Somente VDT+"),
               ("RT", "Recusado total"),
-              ("PV", "Perdemos o vídeoC"),
+              ("PV", "Perdemos o vídeo"),
               ("P","Proposto"),
               ("C","Curadoria"),
               ("A","Aprovado")
