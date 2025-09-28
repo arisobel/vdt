@@ -19,6 +19,10 @@ if auth.has_membership("admin") | auth.has_membership("gerente"):
     ]))
     response.menu.append((T('Cadastros'), False, URL('default', 'lista'), []))
 
+# Menu específico para editores
+if auth.user and auth.user.editores:
+    response.menu.append((T('Kanban Editores'), False, URL('media', 'kanban_editores'), []))
+
 # ----------------------------------------------------------------------------------------------------------------------
 # provide shortcuts for development. you can remove everything below in production
 # ----------------------------------------------------------------------------------------------------------------------
