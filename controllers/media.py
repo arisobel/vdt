@@ -650,6 +650,10 @@ def kanban():
     
     tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
     
+    # Get categories and speakers for the add card form
+    categorias = db(db.categoria.id > 0).select(db.categoria.id, db.categoria.nome, orderby=db.categoria.nome)
+    palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
+    
     # Group videos by approval status
     kanban_data = {}
     for status_code, status_name in aprovacoes:
@@ -663,7 +667,8 @@ def kanban():
         if status in kanban_data:
             kanban_data[status]['videos'].append(video)
     
-    return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media)
+    return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media, 
+                categorias=categorias, palestrantes=palestrantes)
 
 @auth.requires_login()
 def kanban_update():
@@ -699,6 +704,93 @@ def kanban_update():
             'message': 'Status atualizado com sucesso',
             'video_id': video_id,
             'new_status': new_status
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
+
+@auth.requires_login()
+def kanban_add_card():
+    """
+    AJAX endpoint to add a new video card
+    Requires user authentication
+    """
+    # Get form data
+    titulo = request.vars.titulo
+    resenha = request.vars.resenha
+    tipo_media = request.vars.tipo_media
+    categoria = request.vars.categoria
+    palestrante = request.vars.palestrante
+    link = request.vars.link
+    aprovacao = request.vars.aprovacao
+    
+    # Validate required fields
+    if not titulo or not titulo.strip():
+        return response.json({'success': False, 'message': 'Título é obrigatório'})
+    
+    if not tipo_media:
+        return response.json({'success': False, 'message': 'Tipo de mídia é obrigatório'})
+    
+    # Valid approval statuses
+    valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
+    
+    if aprovacao not in valid_statuses:
+        return response.json({'success': False, 'message': 'Status de aprovação inválido'})
+    
+    # Valid media types
+    valid_types = ["L", "V", "YT", "A", "S"]
+    if tipo_media not in valid_types:
+        return response.json({'success': False, 'message': 'Tipo de mídia inválido'})
+    
+    try:
+        # Get or create a default tag for new cards
+        default_tag = db(db.tag.nome == 'Kanban').select().first()
+        if not default_tag:
+            # Create default tag if it doesn't exist
+            tag_id = db.tag.insert(nome='Kanban')
+        else:
+            tag_id = default_tag.id
+        
+        # Prepare data for insertion
+        data = {
+            'titulo': titulo.strip(),
+            'aprovacao': aprovacao,
+            'tipo_media': tipo_media,
+            'tag_chave': tag_id,
+            'criado_por': auth.user_id
+        }
+        
+        # Add optional fields if provided
+        if resenha and resenha.strip():
+            data['resenha'] = resenha.strip()
+            
+        if categoria and categoria.strip():
+            # Validate category exists
+            cat = db(db.categoria.id == categoria).select().first()
+            if cat:
+                data['categoria'] = categoria
+        
+        if palestrante and palestrante.strip():
+            # Validate speaker exists
+            speaker = db(db.palestrante.id == palestrante).select().first()
+            if speaker:
+                data['palestrante'] = palestrante
+                
+        if link and link.strip():
+            data['link'] = link.strip()
+        
+        # Insert the new video
+        video_id = db.media_video.insert(**data)
+        db.commit()
+        
+        return response.json({
+            'success': True, 
+            'message': 'Card adicionado com sucesso',
+            'video_id': video_id
         })
         
     except Exception as e:
