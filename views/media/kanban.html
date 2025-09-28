@@ -656,13 +656,21 @@ function initChosenPalestrante() {
     $('#cardSpeaker_chosen').on('keydown', '.search-field input', function(e) {
         if (e.keyCode === 13) { // Enter key
             var searchText = $(this).val().trim();
+            var $input = $(this);
             
-            // Check if there are no results visible
-            var noResults = $('#cardSpeaker_chosen .no-results').is(':visible');
-            
-            if (searchText && noResults) {
-                e.preventDefault(); // Prevent form submission
-                addNewPalestrante(searchText);
+            if (searchText) {
+                // Use a small delay to allow Chosen.js to process the search and show no-results
+                setTimeout(function() {
+                    var noResults = $('#cardSpeaker_chosen .no-results').is(':visible');
+                    var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
+                    
+                    // Check if there are no results visible or no active results
+                    if (noResults || activeResults === 0) {
+                        addNewPalestrante(searchText);
+                    }
+                }, 50); // Small delay to let Chosen.js update the DOM
+                
+                e.preventDefault(); // Always prevent form submission on Enter in search field
             }
         }
     });
@@ -673,6 +681,11 @@ function addNewPalestrante(nome) {
         return;
     }
     
+    nome = nome.trim();
+    
+    // Clear the search field to avoid confusion
+    $('#cardSpeaker_chosen .search-field input').val('');
+    
     // Show loading feedback
     var $chosen = $('#cardSpeaker_chosen');
     $chosen.addClass('chosen-disabled');
@@ -680,7 +693,7 @@ function addNewPalestrante(nome) {
     $.ajax({
         url: '{{=URL("media", "add_palestrante")}}',
         method: 'POST',
-        data: { nome: nome.trim() },
+        data: { nome: nome },
         success: function(response) {
             if (response.success) {
                 // Check if option already exists
