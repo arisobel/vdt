@@ -223,6 +223,28 @@
 .form-control {
     width: 100%;
 }
+
+/* Custom styling for add palestrante button in Chosen dropdown */
+.chosen-results .no-results .add-palestrante-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    margin-left: 5px;
+    border: none;
+    border-radius: 3px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chosen-results .no-results .add-palestrante-btn:hover {
+    background-color: #0056b3;
+}
+
+.chosen-results .no-results {
+    padding: 8px;
+    color: #666;
+}
 </style>
 {{end}}
 
@@ -648,30 +670,44 @@ function initChosenPalestrante() {
     $('#cardSpeaker').chosen({
         width: "100%",
         placeholder_text_single: "Digite para pesquisar ou adicionar novo palestrante...",
-        no_results_text: "Nenhum resultado encontrado. Pressione Enter para adicionar",
+        no_results_text: "Nenhum resultado encontrado para",
         allow_single_deselect: true
     });
 
-    // Handle adding new palestrante when no results found
-    $('#cardSpeaker_chosen').on('keydown', '.search-field input', function(e) {
-        if (e.keyCode === 13) { // Enter key
-            var searchText = $(this).val().trim();
-            var $input = $(this);
-            
-            if (searchText) {
-                // Use a small delay to allow Chosen.js to process the search and show no-results
-                setTimeout(function() {
-                    var noResults = $('#cardSpeaker_chosen .no-results').is(':visible');
-                    var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
-                    
-                    // Check if there are no results visible or no active results
-                    if (noResults || activeResults === 0) {
-                        addNewPalestrante(searchText);
-                    }
-                }, 50); // Small delay to let Chosen.js update the DOM
+    // Handle the search input and add button when no results found
+    $('#cardSpeaker_chosen').on('keyup', '.search-field input', function(e) {
+        var searchText = $(this).val().trim();
+        
+        if (searchText) {
+            // Use a small delay to allow Chosen.js to process the search and show no-results
+            setTimeout(function() {
+                var $noResults = $('#cardSpeaker_chosen .no-results');
+                var activeResults = $('#cardSpeaker_chosen .chosen-results .active-result').length;
                 
-                e.preventDefault(); // Always prevent form submission on Enter in search field
-            }
+                // Check if there are no results visible or no active results
+                if ($noResults.is(':visible') || activeResults === 0) {
+                    // Add the button if it doesn't exist
+                    if (!$noResults.find('.add-palestrante-btn').length) {
+                        var buttonHtml = ' "<strong>' + searchText + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;" data-nome="' + searchText + '">Adicionar</button>';
+                        $noResults.append(buttonHtml);
+                    } else {
+                        // Update existing button with new search text
+                        $noResults.find('strong').text(searchText);
+                        $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
+                    }
+                }
+            }, 100); // Small delay to let Chosen.js update the DOM
+        }
+    });
+
+    // Handle click on the "Add" button
+    $('#cardSpeaker_chosen').on('click', '.add-palestrante-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var nome = $(this).attr('data-nome');
+        if (nome && nome.trim()) {
+            addNewPalestrante(nome.trim());
         }
     });
 }
@@ -708,8 +744,9 @@ function addNewPalestrante(nome) {
                     existingOption.prop('selected', true);
                 }
                 
-                // Update chosen
+                // Update chosen and close dropdown
                 $('#cardSpeaker').trigger('chosen:updated');
+                $('#cardSpeaker').trigger('chosen:close');
                 
                 // Show success feedback
                 if (response.message === 'Palestrante já existia') {
