@@ -132,7 +132,7 @@ def cards():
     if not auth.user or not auth.user.editores:
         session.flash = "Acesso negado: Apenas editores podem visualizar os cartões."
         redirect(URL('default', 'index'))
-    
+
     response.title = "Shiurim"
     categ = request.vars.categ or None
     paletrante = request.vars.palestr or None
@@ -618,7 +618,7 @@ def kanban():
     Kanban board view for media_video approval status
     """
     response.title = "Kanban - Status de Aprovação"
-    
+
     # Get all media_video records with related data
     campos = [
         db.media_video.id,
@@ -631,7 +631,7 @@ def kanban():
         db.categoria.nome,
         db.auth_user.nome
     ]
-    
+
     videos = db(db.media_video.id > 0).select(
         *campos,
         left=[
@@ -641,7 +641,7 @@ def kanban():
         ],
         orderby=db.media_video.lancado
     )
-    
+
     # Get approval statuses (defined in models/table.py but accessible here)
     aprovacoes = [("EP", "EM PROSPECÇÃO"),
                   ("AT","a Traduzir"),
@@ -656,15 +656,15 @@ def kanban():
                   ("P","Proposto"),
                   ("C","Curadoria"),
                   ("A","Aprovado")]
-    
+
     tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
-    
+
     # Get categories, speakers and editors for the add/edit card form
     categorias = db(db.categoria.id > 0).select(db.categoria.id, db.categoria.nome, orderby=db.categoria.nome)
     palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
     # Get only users who are editors (editores = True)
     editores = db(db.auth_user.editores == True).select(db.auth_user.id, db.auth_user.nome, orderby=db.auth_user.nome)
-    
+
     # Group videos by approval status
     kanban_data = {}
     for status_code, status_name in aprovacoes:
@@ -672,13 +672,13 @@ def kanban():
             'name': status_name,
             'videos': []
         }
-    
+
     for video in videos:
         status = video['media_video']['aprovacao']
         if status in kanban_data:
             kanban_data[status]['videos'].append(video)
-    
-    return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media, 
+
+    return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media,
                 categorias=categorias, palestrantes=palestrantes, editores=editores)
 
 @auth.requires_login()
@@ -689,38 +689,38 @@ def kanban_update():
     """
     video_id = request.vars.video_id
     new_status = request.vars.new_status
-    
+
     # Validate input parameters
     if not video_id or not new_status:
         return response.json({'success': False, 'message': 'Parâmetros inválidos'})
-    
+
     # Valid approval statuses
     valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
-    
+
     if new_status not in valid_statuses:
         return response.json({'success': False, 'message': 'Status de aprovação inválido'})
-    
+
     try:
         # Check if video exists
         video = db(db.media_video.id == video_id).select().first()
         if not video:
             return response.json({'success': False, 'message': 'Vídeo não encontrado'})
-        
+
         # Update the status
         db(db.media_video.id == video_id).update(aprovacao=new_status)
         db.commit()
-        
+
         return response.json({
-            'success': True, 
+            'success': True,
             'message': 'Status atualizado com sucesso',
             'video_id': video_id,
             'new_status': new_status
         })
-        
+
     except Exception as e:
         db.rollback()
         return response.json({
-            'success': False, 
+            'success': False,
             'message': f'Erro interno: {str(e)}'
         })
 
@@ -731,10 +731,10 @@ def kanban_get_card():
     Requires user authentication
     """
     video_id = request.vars.video_id
-    
+
     if not video_id:
         return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
-    
+
     try:
         # Get video data with related information
         video = db(db.media_video.id == video_id).select(
@@ -748,10 +748,10 @@ def kanban_get_card():
             db.media_video.aprovacao,
             db.media_video.editor_responsavel
         ).first()
-        
+
         if not video:
             return response.json({'success': False, 'message': 'Vídeo não encontrado'})
-        
+
         return response.json({
             'success': True,
             'data': {
@@ -766,10 +766,10 @@ def kanban_get_card():
                 'editor_responsavel': video.editor_responsavel or ''
             }
         })
-        
+
     except Exception as e:
         return response.json({
-            'success': False, 
+            'success': False,
             'message': f'Erro interno: {str(e)}'
         })
 
@@ -789,44 +789,44 @@ def kanban_edit_card():
     link = request.vars.link
     aprovacao = request.vars.aprovacao
     editor_responsavel = request.vars.editor_responsavel
-    
+
     # Validate required fields
     if not video_id:
         return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
-    
+
     if not titulo or not titulo.strip():
         return response.json({'success': False, 'message': 'Título é obrigatório'})
-    
+
     if not tipo_media:
         return response.json({'success': False, 'message': 'Tipo de mídia é obrigatório'})
-    
+
     # Valid approval statuses
     valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
-    
+
     if aprovacao not in valid_statuses:
         return response.json({'success': False, 'message': 'Status de aprovação inválido'})
-    
+
     # Valid media types
     valid_types = ["L", "V", "YT", "A", "S"]
     if tipo_media not in valid_types:
         return response.json({'success': False, 'message': 'Tipo de mídia inválido'})
-    
+
     try:
         # Check if video exists
         video = db(db.media_video.id == video_id).select().first()
         if not video:
             return response.json({'success': False, 'message': 'Vídeo não encontrado'})
-        
+
         # Prepare data for update
         data = {
             'titulo': titulo.strip(),
             'aprovacao': aprovacao,
             'tipo_media': tipo_media
         }
-        
+
         # Add optional fields if provided
         data['resenha'] = resenha.strip() if resenha else None
-            
+
         if categoria and categoria.strip():
             # Validate category exists
             cat = db(db.categoria.id == categoria).select().first()
@@ -836,7 +836,7 @@ def kanban_edit_card():
                 data['categoria'] = None
         else:
             data['categoria'] = None
-        
+
         if palestrante and palestrante.strip():
             # Validate speaker exists
             speaker = db(db.palestrante.id == palestrante).select().first()
@@ -846,7 +846,7 @@ def kanban_edit_card():
                 data['palestrante'] = None
         else:
             data['palestrante'] = None
-        
+
         if editor_responsavel and editor_responsavel.strip():
             # Validate editor exists and has editores=True
             editor = db((db.auth_user.id == editor_responsavel) & (db.auth_user.editores == True)).select().first()
@@ -856,23 +856,23 @@ def kanban_edit_card():
                 data['editor_responsavel'] = None
         else:
             data['editor_responsavel'] = None
-                
+
         data['link'] = link.strip() if link else None
-        
+
         # Update the video
         db(db.media_video.id == video_id).update(**data)
         db.commit()
-        
+
         return response.json({
-            'success': True, 
+            'success': True,
             'message': 'Card atualizado com sucesso',
             'video_id': video_id
         })
-        
+
     except Exception as e:
         db.rollback()
         return response.json({
-            'success': False, 
+            'success': False,
             'message': f'Erro interno: {str(e)}'
         })
 
@@ -891,25 +891,25 @@ def kanban_add_card():
     link = request.vars.link
     aprovacao = request.vars.aprovacao
     editor_responsavel = request.vars.editor_responsavel
-    
+
     # Validate required fields
     if not titulo or not titulo.strip():
         return response.json({'success': False, 'message': 'Título é obrigatório'})
-    
+
     if not tipo_media:
         return response.json({'success': False, 'message': 'Tipo de mídia é obrigatório'})
-    
+
     # Valid approval statuses
     valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
-    
+
     if aprovacao not in valid_statuses:
         return response.json({'success': False, 'message': 'Status de aprovação inválido'})
-    
+
     # Valid media types
     valid_types = ["L", "V", "YT", "A", "S"]
     if tipo_media not in valid_types:
         return response.json({'success': False, 'message': 'Tipo de mídia inválido'})
-    
+
     try:
         # Get or create a default tag for new cards
         default_tag = db(db.tag.nome == 'Kanban').select().first()
@@ -918,7 +918,7 @@ def kanban_add_card():
             tag_id = db.tag.insert(nome='Kanban')
         else:
             tag_id = default_tag.id
-        
+
         # Prepare data for insertion
         data = {
             'titulo': titulo.strip(),
@@ -927,96 +927,228 @@ def kanban_add_card():
             'tag_chave': tag_id,
             'criado_por': auth.user_id
         }
-        
+
         # Add optional fields if provided
         if resenha and resenha.strip():
             data['resenha'] = resenha.strip()
-            
+
         if categoria and categoria.strip():
             # Validate category exists
             cat = db(db.categoria.id == categoria).select().first()
             if cat:
                 data['categoria'] = categoria
-        
+
         if palestrante and palestrante.strip():
             # Validate speaker exists
             speaker = db(db.palestrante.id == palestrante).select().first()
             if speaker:
                 data['palestrante'] = palestrante
-        
+
         if editor_responsavel and editor_responsavel.strip():
             # Validate editor exists and has editores=True
             editor = db((db.auth_user.id == editor_responsavel) & (db.auth_user.editores == True)).select().first()
             if editor:
                 data['editor_responsavel'] = editor_responsavel
-                
+
         if link and link.strip():
             data['link'] = link.strip()
-        
+
         # Insert the new video
         video_id = db.media_video.insert(**data)
         db.commit()
-        
+
         return response.json({
-            'success': True, 
+            'success': True,
             'message': 'Card adicionado com sucesso',
             'video_id': video_id
         })
-        
+
     except Exception as e:
         db.rollback()
         return response.json({
-            'success': False, 
+            'success': False,
             'message': f'Erro interno: {str(e)}'
         })
 
 @auth.requires_login()
+def kanban_editores():
+    """
+    Kanban board view for distributing AT/TD cards to editors
+    """
+    # Check if current user has editores field set to True
+    # if not auth.user or not auth.user.editores:
+    if not auth.user:
+        session.flash = "Acesso negado: Apenas editores podem visualizar o Kanban de Editores."
+        redirect(URL('default', 'index'))
+
+    response.title = "Kanban - Distribuição de Editores"
+
+    # Get cards with AT and TD status
+    campos = [
+        db.media_video.id,
+        db.media_video.titulo,
+        db.media_video.aprovacao,
+        db.media_video.tipo_media,
+        db.media_video.lancado,
+        db.media_video.editor_responsavel,
+        db.palestrante.nome,
+        db.categoria.nome,
+        db.auth_user.nome
+    ]
+
+    # Filter for AT and TD cards only
+    videos = db((db.media_video.aprovacao == "AT") | (db.media_video.aprovacao == "TD")).select(
+        *campos,
+        left=[
+            db.palestrante.on(db.media_video.palestrante == db.palestrante.id),
+            db.categoria.on(db.media_video.categoria == db.categoria.id),
+            db.auth_user.on(db.media_video.editor_responsavel == db.auth_user.id)
+        ],
+        orderby=db.media_video.lancado
+    )
+
+    # Get all editors (users with editores=True)
+    editores = db(db.auth_user.editores == True).select(
+        db.auth_user.id,
+        db.auth_user.nome,
+        orderby=db.auth_user.nome
+    )
+
+    tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
+
+    # Get categories and speakers for the modal form
+    categorias = db(db.categoria.id > 0).select(db.categoria.id, db.categoria.nome, orderby=db.categoria.nome)
+    palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
+
+    # Group videos by editor assignment
+    kanban_data = {}
+
+    # Unassigned column (no editor_responsavel)
+    kanban_data['unassigned'] = {
+        'name': 'Sem Editor Atribuído',
+        'videos': []
+    }
+
+    # Create columns for each editor
+    for editor in editores:
+        kanban_data[f'editor_{editor.id}'] = {
+            'name': editor.nome,
+            'editor_id': editor.id,
+            'videos': []
+        }
+
+    # Distribute videos into columns
+    for video in videos:
+        if video['media_video']['editor_responsavel']:
+            editor_key = f"editor_{video['media_video']['editor_responsavel']}"
+            if editor_key in kanban_data:
+                kanban_data[editor_key]['videos'].append(video)
+        else:
+            kanban_data['unassigned']['videos'].append(video)
+
+    return dict(kanban_data=kanban_data, editores=editores, tipos_media=tipos_media,
+                categorias=categorias, palestrantes=palestrantes)
+
+@auth.requires_login()
+def kanban_editores_assign():
+    """
+    AJAX endpoint to assign/unassign editor to a video card
+    """
+    video_id = request.vars.video_id
+    editor_id = request.vars.editor_id
+
+    # Validate input parameters
+    if not video_id:
+        return response.json({'success': False, 'message': 'ID do vídeo é obrigatório'})
+
+    try:
+        # Check if video exists and is AT or TD
+        video = db((db.media_video.id == video_id) &
+                  ((db.media_video.aprovacao == "AT") | (db.media_video.aprovacao == "TD"))).select().first()
+        if not video:
+            return response.json({'success': False, 'message': 'Vídeo não encontrado ou não é AT/TD'})
+
+        # If editor_id is provided, validate it's a real editor
+        if editor_id and editor_id.strip():
+            editor = db((db.auth_user.id == editor_id) & (db.auth_user.editores == True)).select().first()
+            if not editor:
+                return response.json({'success': False, 'message': 'Editor não encontrado'})
+
+            # Assign editor
+            db(db.media_video.id == video_id).update(editor_responsavel=editor_id)
+            db.commit()
+
+            return response.json({
+                'success': True,
+                'message': f'Card atribuído ao editor {editor.nome}',
+                'video_id': video_id,
+                'editor_id': editor_id,
+                'editor_name': editor.nome
+            })
+        else:
+            # Unassign editor (set to None)
+            db(db.media_video.id == video_id).update(editor_responsavel=None)
+            db.commit()
+
+            return response.json({
+                'success': True,
+                'message': 'Editor removido do card',
+                'video_id': video_id,
+                'editor_id': None
+            })
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        })
+
 def add_palestrante():
     """
     AJAX endpoint to add a new palestrante (speaker)
     Requires user authentication
     """
     nome = request.vars.nome
-    
+
     # Validate required field
     if not nome or not nome.strip():
         return response.json({'success': False, 'message': 'Nome do palestrante é obrigatório'})
-    
+
     nome = nome.strip()
-    
+
     # Additional validation
     if len(nome) < 2:
         return response.json({'success': False, 'message': 'Nome muito curto (mínimo 2 caracteres)'})
-    
+
     if len(nome) > 100:
         return response.json({'success': False, 'message': 'Nome muito longo (máximo 100 caracteres)'})
-    
+
     # Check if palestrante already exists (case insensitive)
     existing = db(db.palestrante.nome.lower() == nome.lower()).select().first()
     if existing:
         return response.json({
-            'success': True, 
+            'success': True,
             'palestrante_id': existing.id,
             'nome': existing.nome,
             'message': 'Palestrante já existia'
         })
-    
+
     try:
         # Insert new palestrante
         palestrante_id = db.palestrante.insert(nome=nome)
         db.commit()
-        
+
         return response.json({
-            'success': True, 
+            'success': True,
             'palestrante_id': palestrante_id,
             'nome': nome,
             'message': 'Palestrante adicionado com sucesso'
         })
-        
+
     except Exception as e:
         db.rollback()
         return response.json({
-            'success': False, 
+            'success': False,
             'message': f'Erro interno: {str(e)}'
         })
 
@@ -1024,7 +1156,7 @@ def postar_wa():
 
     import requests
     from requests.auth import HTTPBasicAuth
-    
+
     id_grupo = request.args(1)
     gpid = request.args(2)
     link_video = request.args(3)
@@ -1040,18 +1172,18 @@ def postar_wa():
     # URL do vídeo que será baixado e enviado
     video_url = "https://www.videosdetoire.com.br/init/default/download/{}".format(link_video)
 
-    
+
     # muda o represent de categoria para nome_wa
     #db.media_video.categoria.represent = lambda value, row: row.nome_wa or ''
-    
+
     db.categoria._format  = lambda r: r.nome_wa or ''
-    
-    
+
+
     # carrega o registro do video
     video_reg = db(db.media_video.id==id_video).select()
-    
+
     vid = next(video_reg.render())
-    
+
     palest = vid['palestrante']
     idioma = idiomas.get(vid['idioma'],"Desconhecida")
     legenda = idiomas.get(vid['legendas'],"Nenhuma")
@@ -1059,18 +1191,18 @@ def postar_wa():
     titulo = vid['titulo']
     resenha = vid['resenha']
     categoria = vid['categoria']
-    
+
     legendas = "Legendas em {}".format(legenda) if legenda != "Nenhuma" else ""
-    
+
     if resenha:
         titulo = "{} \n {}".format(titulo, resenha)
-    
+
     # forma descrição
     descric = '🗣 {idioma} {legendas}\n⏰ ± {duracao} min \n🎩 {palest} \n\n 💬 {titulo}'.format(idioma=idioma,duracao=duracao,palest=palest,titulo=titulo, legendas=legendas)
-    
+
     if categoria:
         descric = "{} \n\n {}".format(categoria, descric)
-    
+
     # Nome temporário do arquivo a ser salvo
     temp_video_file = "temp_video.mp4"
 

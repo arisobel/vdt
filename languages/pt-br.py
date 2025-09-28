@@ -195,6 +195,7 @@
 'Invitation to join %(site)s': 'Convite para entrar %(site)s',
 'JSON': 'JSON',
 'JSON export of visible columns': 'JSON export of visible columns',
+'Kanban': 'Kanban',
 'Key': 'Chave',
 'Key verified': 'Chave verificada',
 'Lancado': 'Lancado',

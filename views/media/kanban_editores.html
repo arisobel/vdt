@@ -1,0 +1,702 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+<link rel="stylesheet" href="{{=URL('static','css/jquery-ui.css')}}"/>
+<link rel="stylesheet" href="{{=URL('static','plugins/chosen/chosen.css')}}"/>
+<style>
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    overflow-x: auto;
+    min-height: 600px;
+    max-height: 80vh;
+    overflow-y: hidden;
+}
+
+.kanban-column {
+    min-width: 300px;
+    max-width: 300px;
+    background-color: #f8f9fa;
+    border-radius: 8px; 
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(80vh - 40px);
+}
+
+.kanban-column.unassigned {
+    border: 2px solid #dc3545;
+    background-color: #fdf2f2;
+}
+
+.kanban-column.editor {
+    border: 2px solid #28a745;
+    background-color: #f2f9f2;
+}
+
+.kanban-column-header {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    text-align: center;
+    color: #495057;
+}
+
+.unassigned .kanban-column-header {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.editor .kanban-column-header {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.kanban-cards {
+    min-height: 500px;
+    max-height: calc(80vh - 150px);
+    padding: 5px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.kanban-card {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: move;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.kanban-card.status-AT {
+    border-left: 4px solid #ffc107;
+}
+
+.kanban-card.status-TD {
+    border-left: 4px solid #17a2b8;
+}
+
+.kanban-card .edit-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #666;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.kanban-card:hover .edit-icon {
+    opacity: 1;
+}
+
+.kanban-card .edit-icon:hover {
+    color: #007bff;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.kanban-card.ui-sortable-helper {
+    transform: rotate(5deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.kanban-card-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #333;
+    line-height: 1.2;
+}
+
+.kanban-card-meta {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.kanban-card-type {
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.type-L { background-color: #6c757d; }
+.type-V { background-color: #dc3545; }
+.type-YT { background-color: #ff0000; }
+.type-A { background-color: #17a2b8; }
+.type-S { background-color: #1db954; }
+
+.kanban-empty {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 2px dashed #dee2e6;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.success-feedback {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border: 1px solid #c3e6cb;
+    animation: fadeOut 3s ease-in-out;
+}
+
+.error-feedback {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeOut {
+    0%, 50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Add Card Button */
+.add-card-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #fff;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-card-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.add-card-btn i {
+    font-size: 16px;
+}
+
+/* Modal customizations */
+.modal-dialog {
+    max-width: 600px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    width: 100%;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-AT {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-TD {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+</style>
+{{end}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-kanban"></i> Kanban - Distribuição de Editores</h2>
+            <p class="text-muted">Arraste os cards AT/TD entre as colunas para atribuir/remover editores responsáveis</p>
+            <div id="feedback-area"></div>
+        </div>
+    </div>
+    
+    <div class="kanban-board">
+        <!-- Unassigned Column -->
+        <div class="kanban-column unassigned" data-editor-id="">
+            <div class="kanban-column-header">
+                {{=kanban_data['unassigned']['name']}}
+                <small class="d-block mt-1">({{=len(kanban_data['unassigned']['videos'])}} items)</small>
+            </div>
+            
+            <div class="kanban-cards" data-editor-id="">
+                {{videos = kanban_data['unassigned']['videos']}}
+                {{if videos:}}
+                    {{for video in videos:}}
+                        <div class="kanban-card status-{{=video['media_video']['aprovacao']}}" data-video-id="{{=video['media_video']['id']}}">
+                            <i class="bi bi-pencil-square edit-icon" onclick="editCard({{=video['media_video']['id']}}); event.stopPropagation();" title="Editar card"></i>
+                            <div class="kanban-card-title">{{=video['media_video']['titulo'][:50]}}{{='...' if len(video['media_video']['titulo']) > 50 else ''}}</div>
+                            
+                            <div class="kanban-card-meta">
+                                <span class="kanban-card-type type-{{=video['media_video']['tipo_media']}}">
+                                    {{=dict(tipos_media).get(video['media_video']['tipo_media'], video['media_video']['tipo_media'])}}
+                                </span>
+                                <span class="status-badge status-{{=video['media_video']['aprovacao']}}">
+                                    {{=video['media_video']['aprovacao']}}
+                                </span>
+                            </div>
+                            
+                            <small style="font-size: 11px; color: #666;">{{=video['media_video']['lancado'].strftime('%d/%m/%Y') if video['media_video']['lancado'] else ''}}</small>
+                            
+                            {{if video['palestrante']['nome']:}}
+                                <div style="font-size: 11px; color: #888; margin-top: 5px;">
+                                    <i class="bi bi-person-fill"></i> {{=video['palestrante']['nome']}}
+                                </div>
+                            {{pass}}
+                            
+                            {{if video['categoria']['nome']:}}
+                                <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                    <i class="bi bi-tag-fill"></i> {{=video['categoria']['nome']}}
+                                </div>
+                            {{pass}}
+                        </div>
+                    {{pass}}
+                {{else:}}
+                    <div class="kanban-empty">
+                        Nenhum card sem editor atribuído
+                    </div>
+                {{pass}}
+                
+                <!-- Add Card Button for AT status -->
+                <div class="add-card-btn" data-status="AT" onclick="showAddCardModal('AT', 'A Traduzir')">
+                    <i class="bi bi-plus-circle"></i>
+                    Adicionar Card AT
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Columns -->
+        {{for editor in editores:}}
+            {{editor_key = f'editor_{editor.id}'}}
+            <div class="kanban-column editor" data-editor-id="{{=editor.id}}">
+                <div class="kanban-column-header">
+                    {{=kanban_data[editor_key]['name']}}
+                    <small class="d-block mt-1">({{=len(kanban_data[editor_key]['videos'])}} items)</small>
+                </div>
+                
+                <div class="kanban-cards" data-editor-id="{{=editor.id}}">
+                    {{videos = kanban_data[editor_key]['videos']}}
+                    {{if videos:}}
+                        {{for video in videos:}}
+                            <div class="kanban-card status-{{=video['media_video']['aprovacao']}}" data-video-id="{{=video['media_video']['id']}}">
+                                <i class="bi bi-pencil-square edit-icon" onclick="editCard({{=video['media_video']['id']}}); event.stopPropagation();" title="Editar card"></i>
+                                <div class="kanban-card-title">{{=video['media_video']['titulo'][:50]}}{{='...' if len(video['media_video']['titulo']) > 50 else ''}}</div>
+                                
+                                <div class="kanban-card-meta">
+                                    <span class="kanban-card-type type-{{=video['media_video']['tipo_media']}}">
+                                        {{=dict(tipos_media).get(video['media_video']['tipo_media'], video['media_video']['tipo_media'])}}
+                                    </span>
+                                    <span class="status-badge status-{{=video['media_video']['aprovacao']}}">
+                                        {{=video['media_video']['aprovacao']}}
+                                    </span>
+                                </div>
+                                
+                                <small style="font-size: 11px; color: #666;">{{=video['media_video']['lancado'].strftime('%d/%m/%Y') if video['media_video']['lancado'] else ''}}</small>
+                                
+                                {{if video['palestrante']['nome']:}}
+                                    <div style="font-size: 11px; color: #888; margin-top: 5px;">
+                                        <i class="bi bi-person-fill"></i> {{=video['palestrante']['nome']}}
+                                    </div>
+                                {{pass}}
+                                
+                                {{if video['categoria']['nome']:}}
+                                    <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                        <i class="bi bi-tag-fill"></i> {{=video['categoria']['nome']}}
+                                    </div>
+                                {{pass}}
+                            </div>
+                        {{pass}}
+                    {{else:}}
+                        <div class="kanban-empty">
+                            Nenhum card atribuído
+                        </div>
+                    {{pass}}
+                    
+                    <!-- Add Card Button for TD status -->
+                    <div class="add-card-btn" data-status="TD" onclick="showAddCardModal('TD', 'Traduzindo')">
+                        <i class="bi bi-plus-circle"></i>
+                        Adicionar Card TD
+                    </div>
+                </div>
+            </div>
+        {{pass}}
+    </div>
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal fade" id="addCardModal" tabindex="-1" role="dialog" aria-labelledby="addCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCardModalLabel">Adicionar Novo Card</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addCardForm">
+                    <input type="hidden" id="selectedStatus" name="status" value="">
+                    <input type="hidden" id="cardId" name="card_id" value="">
+                    
+                    <div class="form-group">
+                        <label for="cardTitle">Título *</label>
+                        <input type="text" class="form-control" id="cardTitle" name="titulo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardDescription">Resenha</label>
+                        <textarea class="form-control" id="cardDescription" name="resenha" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cardType">Tipo de Mídia *</label>
+                                <select class="form-control" id="cardType" name="tipo_media" required>
+                                    {{for code, name in tipos_media:}}
+                                        <option value="{{=code}}">{{=name}}</option>
+                                    {{pass}}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cardCategory">Categoria</label>
+                                <select class="form-control" id="cardCategory" name="categoria">
+                                    <option value="">Selecione uma categoria</option>
+                                    {{for categoria in categorias:}}
+                                        <option value="{{=categoria.id}}">{{=categoria.nome}}</option>
+                                    {{pass}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardSpeaker">Palestrante</label>
+                        <select class="form-control" id="cardSpeaker" name="palestrante">
+                            <option value="">Selecione um palestrante</option>
+                            {{for palestrante in palestrantes:}}
+                                <option value="{{=palestrante.id}}">{{=palestrante.nome}}</option>
+                            {{pass}}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardEditor">Editor Responsável</label>
+                        <select class="form-control" id="cardEditor" name="editor_responsavel">
+                            <option value="">Nenhum editor atribuído</option>
+                            {{for editor in editores:}}
+                                <option value="{{=editor.id}}">{{=editor.nome}}</option>
+                            {{pass}}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardLink">Link</label>
+                        <input type="url" class="form-control" id="cardLink" name="link" placeholder="https://...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="modalActionButton" onclick="saveCard()">Adicionar Card</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{=URL('static','js/jquery-ui.min.js')}}"></script>
+<script src="{{=URL('static','plugins/chosen/chosen.jquery.min.js')}}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize chosen selectors for better UX
+    $('#cardSpeaker, #cardEditor, #cardCategory').chosen({
+        width: '100%',
+        no_results_text: 'Nenhum resultado encontrado para'
+    });
+    
+    // Make cards sortable between columns
+    $('.kanban-cards').sortable({
+        connectWith: '.kanban-cards',
+        placeholder: 'ui-state-highlight',
+        tolerance: 'pointer',
+        helper: 'clone',
+        start: function(e, ui) {
+            ui.placeholder.height(ui.item.height());
+            $(this).addClass('loading');
+        },
+        stop: function(e, ui) {
+            $(this).removeClass('loading');
+            
+            var videoId = ui.item.data('video-id');
+            var newEditorId = ui.item.closest('.kanban-cards').data('editor-id');
+            
+            // Update the editor assignment via AJAX
+            $.ajax({
+                url: '{{=URL("media", "kanban_editores_assign")}}',
+                method: 'POST',
+                data: {
+                    video_id: videoId,
+                    editor_id: newEditorId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showFeedback('success', response.message);
+                        updateColumnCounts();
+                        
+                        // Log the update for debugging (only in development)
+                        if (window.console && window.console.log) {
+                            console.log('Video ' + videoId + ' assigned to editor: ' + newEditorId);
+                        }
+                    } else {
+                        showFeedback('error', 'Erro: ' + response.message);
+                        // Revert the move if failed
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    }
+                },
+                error: function() {
+                    showFeedback('error', 'Erro de conexão. Tente novamente.');
+                    // Revert the move if failed
+                    location.reload();
+                }
+            });
+        }
+    }).disableSelection();
+});
+
+// Show feedback messages
+function showFeedback(type, message) {
+    var feedbackClass = type === 'success' ? 'success-feedback' : 'error-feedback';
+    var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
+    $('#feedback-area').html(feedbackHtml);
+    
+    if (type === 'success') {
+        setTimeout(function() {
+            $('#feedback-area').empty();
+        }, 3000);
+    }
+}
+
+// Update column counts
+function updateColumnCounts() {
+    $('.kanban-column').each(function() {
+        var count = $(this).find('.kanban-card').length;
+        $(this).find('.kanban-column-header small').text('(' + count + ' items)');
+        
+        // Show/hide empty message
+        var emptyDiv = $(this).find('.kanban-empty');
+        if (count === 0) {
+            emptyDiv.show();
+        } else {
+            emptyDiv.hide();
+        }
+    });
+}
+
+// Show add card modal
+function showAddCardModal(status, statusName) {
+    // Clear form
+    $('#addCardForm')[0].reset();
+    $('#cardId').val('');
+    $('#selectedStatus').val(status);
+    
+    // Update modal title and button
+    $('#addCardModalLabel').text('Adicionar Novo Card - ' + statusName);
+    $('#modalActionButton').text('Adicionar Card');
+    
+    // Update chosen selectors
+    $('#cardSpeaker, #cardEditor, #cardCategory').trigger('chosen:updated');
+    
+    // Show modal
+    $('#addCardModal').modal('show');
+}
+
+// Edit existing card
+function editCard(videoId) {
+    $.ajax({
+        url: '{{=URL("media", "kanban_get_card")}}',
+        method: 'POST',
+        data: { video_id: videoId },
+        success: function(response) {
+            if (response.success) {
+                // Populate form with existing data
+                $('#cardId').val(response.data.id);
+                $('#cardTitle').val(response.data.titulo);
+                $('#cardDescription').val(response.data.resenha);
+                $('#cardType').val(response.data.tipo_media);
+                $('#cardCategory').val(response.data.categoria);
+                $('#cardSpeaker').val(response.data.palestrante);
+                $('#cardEditor').val(response.data.editor_responsavel);
+                $('#cardLink').val(response.data.link);
+                $('#selectedStatus').val(response.data.aprovacao);
+                
+                // Update chosen selectors
+                $('#cardSpeaker, #cardEditor, #cardCategory').trigger('chosen:updated');
+                
+                // Update modal title and button
+                $('#addCardModalLabel').text('Editar Card');
+                $('#modalActionButton').text('Salvar Alterações');
+                
+                // Show modal
+                $('#addCardModal').modal('show');
+            } else {
+                showFeedback('error', 'Erro ao carregar dados do card: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão ao carregar dados do card.');
+        }
+    });
+}
+
+// Unified save function (handles both add and edit)
+function saveCard() {
+    var cardId = $('#cardId').val();
+    var isEdit = cardId && cardId.trim() !== '';
+    
+    if (isEdit) {
+        updateCard();
+    } else {
+        addNewCard();
+    }
+}
+
+// Update existing card
+function updateCard() {
+    var formData = {
+        video_id: $('#cardId').val(),
+        titulo: $('#cardTitle').val(),
+        resenha: $('#cardDescription').val(),
+        tipo_media: $('#cardType').val(),
+        categoria: $('#cardCategory').val(),
+        palestrante: $('#cardSpeaker').val(),
+        editor_responsavel: $('#cardEditor').val(),
+        link: $('#cardLink').val(),
+        aprovacao: $('#selectedStatus').val()
+    };
+    
+    // Basic validation
+    if (!formData.titulo || !formData.titulo.trim()) {
+        showFeedback('error', 'Título é obrigatório');
+        return;
+    }
+    
+    if (!formData.tipo_media) {
+        showFeedback('error', 'Tipo de mídia é obrigatório');
+        return;
+    }
+    
+    $.ajax({
+        url: '{{=URL("media", "kanban_edit_card")}}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showFeedback('success', response.message);
+                $('#addCardModal').modal('hide');
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showFeedback('error', 'Erro: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão. Tente novamente.');
+        }
+    });
+}
+
+// Add new card
+function addNewCard() {
+    var formData = {
+        titulo: $('#cardTitle').val(),
+        resenha: $('#cardDescription').val(),
+        tipo_media: $('#cardType').val(),
+        categoria: $('#cardCategory').val(),
+        palestrante: $('#cardSpeaker').val(),
+        editor_responsavel: $('#cardEditor').val(),
+        link: $('#cardLink').val(),
+        aprovacao: $('#selectedStatus').val()
+    };
+    
+    // Basic validation
+    if (!formData.titulo || !formData.titulo.trim()) {
+        showFeedback('error', 'Título é obrigatório');
+        return;
+    }
+    
+    if (!formData.tipo_media) {
+        showFeedback('error', 'Tipo de mídia é obrigatório');
+        return;
+    }
+    
+    $.ajax({
+        url: '{{=URL("media", "kanban_add_card")}}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showFeedback('success', response.message);
+                $('#addCardModal').modal('hide');
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showFeedback('error', 'Erro: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão. Tente novamente.');
+        }
+    });
+}
+</script>
