@@ -2,14 +2,14 @@
 
 
 {{block head}}
-    <link rel="stylesheet" href="{{ =URL('static', 'plugins/chosen', args=['chosen.css']) }}">
+    <link rel="stylesheet" href="{{ =URL('static', 'plugins/bootstrap-select', args=['bootstrap-select.min.css']) }}">
     <link rel="stylesheet" href="{{ =URL('static', 'css', args=['jquery-ui.css']) }}">
 {{end}}
 
 
 
 {{block page_js}}
-    <script src="{{=URL('static','plugins/chosen', args=['chosen.jquery.min.js'])}}"></script>
+    <script src="{{=URL('static','plugins/bootstrap-select', args=['bootstrap-select.min.js'])}}"></script>
     <script src="{{=URL('static','js', args=['jquery-ui.min.js'])}}"></script>
     <script src="{{=URL('static','js', args=['jquery.ui.touch-punch.min.js'])}}"></script>
 
@@ -32,8 +32,8 @@
 			<div class='row'>
 				<div class='col-md-6'>
 					<div class="wrapper form-group">
-					  <label class="label"><b>Palestrante:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
-					  <select class="form-control" id='palests' multiple>
+					  <label class="label"><b>Palestrante:</b></label> <i class="bi-x-square-fill bootstrap-select-toggle deselect"></i>
+					  <select class="form-control selectpicker" id='palests' multiple data-actions-box="true" data-live-search="true">
 						{{ for palest in db_palestrantes:}}
 						  <option value="{{=palest.id}}" {{='selected' if str(palest.id) in palests else '' }}>{{=palest.nome}}</option>
 						{{ pass }}
@@ -43,8 +43,8 @@
 				</div>
 				<div class='col-md-6'>
 					<div class="wrapper">
-					  <label class="label"><b>Categoria:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
-					  <select id='categs'  class="form-control" multiple>
+					  <label class="label"><b>Categoria:</b></label> <i class="bi-x-square-fill bootstrap-select-toggle deselect"></i>
+					  <select id='categs'  class="form-control selectpicker" multiple data-actions-box="true">
 						{{ for categ in db_categorias:}}
 						  <option value="{{=categ.id}}"  {{='selected' if str(categ.id) in categs else '' }}>{{=categ.nome}}</option>
 						{{ pass }}
@@ -55,8 +55,8 @@
 			<div class='row'>
 				<div class='col-md-8'>
 					<div class="wrapper">
-					  <label class="label"><b>Tag:</b></label> <i class="bi-x-square-fill chosen-toggle deselect"></i>
-					  <select id='tags'  class="form-control" multiple>
+					  <label class="label"><b>Tag:</b></label> <i class="bi-x-square-fill bootstrap-select-toggle deselect"></i>
+					  <select id='tags'  class="form-control selectpicker" multiple data-actions-box="true">
                         {{dict_tags = {} }}
 						{{ for tag in db_tags:}}
                           {{dict_tags.update({tag.id:tag.nome}) }}
@@ -67,7 +67,7 @@
 				</div>
 				<div class='col-md-4'>
 					<div class="wrapper">
-					  <label class="label"><b>Desde:</b></label> <i id="erase-date" class="bi-x-square-fill chosen-toggle deselect"></i>
+					  <label class="label"><b>Desde:</b></label> <i id="erase-date" class="bi-x-square-fill bootstrap-select-toggle deselect"></i>
 					  <input id='desde'  class="form-control date" type="text" value="{{=request.vars.desde.replace('-', '/') if request.vars.desde else ''}}"}>
 					</div>
                     <br>
@@ -449,8 +449,12 @@
 
 {{ block script }}
 
-$('#palests').chosen({
-  width: "100%"
+$('#palests').selectpicker({
+  width: "100%",
+  actionsBox: true,
+  liveSearch: true,
+  selectAllText: 'Selecionar Todos',
+  deselectAllText: 'Desmarcar Todos'
 })
 
 
@@ -469,19 +473,32 @@ $('#erase-date').on('click', function(){
 });
 */
 
-$('#categs').chosen({
-  width: "100%"
+$('#categs').selectpicker({
+  width: "100%",
+  actionsBox: true,
+  selectAllText: 'Selecionar Todos',
+  deselectAllText: 'Desmarcar Todos'
 })
 
-$('#tags').chosen({
-  width: "100%"
+$('#tags').selectpicker({
+  width: "100%",
+  actionsBox: true,
+  selectAllText: 'Selecionar Todos',
+  deselectAllText: 'Desmarcar Todos'
 })
 
-$('.chosen-toggle').each(function(index) {
+$('.bootstrap-select-toggle').each(function(index) {
   console.log(index);
   $(this).on('click', function() {
-    console.log($(this).parent().find('option').text());
-    $(this).parent().find('option').prop('selected', $(this).hasClass('select')).parent().trigger('chosen:updated');
+    var $wrapper = $(this).parent();
+    var $select = $wrapper.find('select');
+    var isDeselect = $(this).hasClass('deselect');
+    
+    if (isDeselect) {
+      $select.selectpicker('deselectAll');
+    } else {
+      $select.selectpicker('selectAll');
+    }
   });
 });
 

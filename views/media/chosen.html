@@ -1,26 +1,25 @@
 {{extend 'layout.html'}}
 
 {{block head}}
-    <link rel="stylesheet" href="{{ =URL('static', 'plugins/chosen', args=['chosen.css']) }}">
+    <link rel="stylesheet" href="{{ =URL('static', 'plugins/bootstrap-select', args=['bootstrap-select.min.css']) }}">
 {{end}}
 
 
 
 {{block page_js}}
-    <script src="{{=URL('static','plugins/chosen', args=['chosen.jquery.min.js'])}}"></script>
+    <script src="{{=URL('static','plugins/bootstrap-select', args=['bootstrap-select.min.js'])}}"></script>
 {{end page_js}}
 
 
 <div class="wrapper">
-  <select multiple>
+  <select multiple class="selectpicker" data-actions-box="true">
     <option value="1">1</option>
     <option value="2">2</option>
     <option value="3">3</option>
   </select>
-  <button type="button" class="chosen-toggle deselect">Deselect all</button>
 </div>
 <div class="wrapper">
-  <select id="second" name="ranktypeselect[]" multiple="multiple" size="5">
+  <select id="second" name="ranktypeselect[]" multiple="multiple" size="5" class="selectpicker" data-actions-box="true">
     <optgroup label="OFF">
       <option>QB</option>
       <option>RB</option>
@@ -45,24 +44,16 @@
       <option>D/ST</option>
     </optgroup>
   </select>
-
-  <button type="button" class="chosen-toggle select">Select all</button>
-  <button type="button" class="chosen-toggle deselect">Deselect all</button>
 </div>
 
 
 
 {{block script}}
-$('select').chosen({
-  width: "300px"
-});
-
-$('.chosen-toggle').each(function(index) {
-  console.log(index);
-  $(this).on('click', function() {
-    console.log($(this).parent().find('option').text());
-    $(this).parent().find('option').prop('selected', $(this).hasClass('select')).parent().trigger('chosen:updated');
-  });
+$('.selectpicker').selectpicker({
+  width: "300px",
+  actionsBox: true,
+  selectAllText: 'Select all',
+  deselectAllText: 'Deselect all'
 });
 {{end script}}
 
