@@ -9,16 +9,21 @@ logs/        # <-- Esta linha ignora todos os logs, incluindo os de erro.
 sessions/
 errors/
 
+
 # web2py - Banco de Dados (SQLite)
 #################################
 *.sqlite
 *.db
+*.bak
+*.vtt
+*.mp4
 
 # web2py - Arquivos de Upload e Mídia
 ####################################
 uploads/
 private/
 applications/*/uploads/
+static/files/
 
 # web2py - Arquivos de Cache
 ##############################
