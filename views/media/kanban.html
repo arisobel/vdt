@@ -1,0 +1,288 @@
+{{extend 'layout.html'}}
+
+{{block head}}
+<link rel="stylesheet" href="{{=URL('static','css/jquery-ui.css')}}"/>
+<style>
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    overflow-x: auto;
+    min-height: 600px;
+}
+
+.kanban-column {
+    min-width: 300px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.kanban-column-header {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    text-align: center;
+    color: #495057;
+}
+
+.kanban-cards {
+    min-height: 500px;
+    padding: 5px;
+}
+
+.kanban-card {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: move;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border-left: 4px solid #007bff;
+    transition: all 0.2s ease;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.kanban-card.ui-sortable-helper {
+    transform: rotate(5deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.kanban-card-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #333;
+    line-height: 1.2;
+}
+
+.kanban-card-meta {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.kanban-card-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.type-L { background-color: #e3f2fd; color: #1976d2; }
+.type-V { background-color: #f3e5f5; color: #7b1fa2; }
+.type-YT { background-color: #ffebee; color: #d32f2f; }
+.type-A { background-color: #e8f5e8; color: #388e3c; }
+.type-S { background-color: #fff3e0; color: #f57c00; }
+
+.kanban-column[data-status="EP"] .kanban-column-header { background-color: #fff3cd; color: #856404; }
+.kanban-column[data-status="AT"] .kanban-column-header { background-color: #d4edda; color: #155724; }
+.kanban-column[data-status="TD"] .kanban-column-header { background-color: #cce5ff; color: #004085; }
+.kanban-column[data-status="RT"] .kanban-column-header { background-color: #f8d7da; color: #721c24; }
+.kanban-column[data-status="PP"] .kanban-column-header { background-color: #d1ecf1; color: #0c5460; }
+.kanban-column[data-status="PB"] .kanban-column-header { background-color: #d4edda; color: #155724; }
+.kanban-column[data-status="AC"] .kanban-column-header { background-color: #e2e3e5; color: #383d41; }
+
+.kanban-empty {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 40px 20px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.ui-sortable-placeholder {
+    background-color: #e9ecef;
+    border: 2px dashed #adb5bd;
+    border-radius: 6px;
+    height: 80px;
+    margin-bottom: 10px;
+    visibility: visible !important;
+}
+
+.ui-sortable-placeholder:before {
+    content: "Solte o card aqui";
+    display: block;
+    text-align: center;
+    line-height: 76px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Loading indicator */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.success-feedback {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    animation: fadeOut 3s forwards;
+}
+
+.error-feedback {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+@keyframes fadeOut {
+    0%, 50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+</style>
+{{end}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-kanban"></i> Kanban - Status de Aprovação</h2>
+            <p class="text-muted">Arraste os cards entre as colunas para alterar o status de aprovação</p>
+            <div id="feedback-area"></div>
+        </div>
+    </div>
+    
+    <div class="kanban-board">
+        {{for status_code, status_name in aprovacoes:}}
+            <div class="kanban-column" data-status="{{=status_code}}">
+                <div class="kanban-column-header">
+                    {{=status_name}}
+                    <small class="d-block mt-1">({{=len(kanban_data.get(status_code, {}).get('videos', []))}} items)</small>
+                </div>
+                
+                <div class="kanban-cards" data-status="{{=status_code}}">
+                    {{videos = kanban_data.get(status_code, {}).get('videos', [])}}
+                    {{if videos:}}
+                        {{for video in videos:}}
+                            <div class="kanban-card" data-video-id="{{=video['media_video']['id']}}">
+                                <div class="kanban-card-title">{{=video['media_video']['titulo'][:50]}}{{='...' if len(video['media_video']['titulo']) > 50 else ''}}</div>
+                                
+                                <div class="kanban-card-meta">
+                                    <span class="kanban-card-type type-{{=video['media_video']['tipo_media']}}">
+                                        {{=dict(tipos_media).get(video['media_video']['tipo_media'], video['media_video']['tipo_media'])}}
+                                    </span>
+                                    <small>{{=video['media_video']['lancado'].strftime('%d/%m/%Y') if video['media_video']['lancado'] else ''}}</small>
+                                </div>
+                                
+                                {{if video['palestrante']['nome']:}}
+                                    <div style="font-size: 11px; color: #888; margin-top: 5px;">
+                                        <i class="bi bi-person-fill"></i> {{=video['palestrante']['nome']}}
+                                    </div>
+                                {{pass}}
+                                
+                                {{if video['categoria']['nome']:}}
+                                    <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                        <i class="bi bi-tag-fill"></i> {{=video['categoria']['nome']}}
+                                    </div>
+                                {{pass}}
+                            </div>
+                        {{pass}}
+                    {{else:}}
+                        <div class="kanban-empty">
+                            Nenhum item nesta coluna
+                        </div>
+                    {{pass}}
+                </div>
+            </div>
+        {{pass}}
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Initialize sortable functionality
+    $(".kanban-cards").sortable({
+        connectWith: ".kanban-cards",
+        placeholder: "ui-sortable-placeholder",
+        cursor: "move",
+        tolerance: "pointer",
+        distance: 5,
+        start: function(e, ui) {
+            ui.placeholder.height(ui.item.height());
+            $(this).addClass('loading');
+        },
+        stop: function(e, ui) {
+            $(this).removeClass('loading');
+            
+            var videoId = ui.item.data('video-id');
+            var newStatus = ui.item.closest('.kanban-cards').data('status');
+            
+            // Update the video status via AJAX
+            $.ajax({
+                url: '{{=URL("media", "kanban_update")}}',
+                method: 'POST',
+                data: {
+                    video_id: videoId,
+                    new_status: newStatus
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showFeedback('success', response.message);
+                        updateColumnCounts();
+                    } else {
+                        showFeedback('error', 'Erro: ' + response.message);
+                        // Revert the move if failed
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    showFeedback('error', 'Erro de conexão. Tente novamente.');
+                    // Revert the move if failed
+                    location.reload();
+                }
+            });
+        }
+    }).disableSelection();
+    
+    // Show feedback messages
+    function showFeedback(type, message) {
+        var feedbackClass = type === 'success' ? 'success-feedback' : 'error-feedback';
+        var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
+        $('#feedback-area').html(feedbackHtml);
+        
+        if (type === 'success') {
+            setTimeout(function() {
+                $('#feedback-area').empty();
+            }, 3000);
+        }
+    }
+    
+    // Update column counts
+    function updateColumnCounts() {
+        $('.kanban-column').each(function() {
+            var count = $(this).find('.kanban-card').length;
+            $(this).find('.kanban-column-header small').text('(' + count + ' items)');
+            
+            // Show/hide empty message
+            var emptyDiv = $(this).find('.kanban-empty');
+            if (count === 0 && emptyDiv.length === 0) {
+                $(this).find('.kanban-cards').append('<div class="kanban-empty">Nenhum item nesta coluna</div>');
+            } else if (count > 0 && emptyDiv.length > 0) {
+                emptyDiv.remove();
+            }
+        });
+    }
+});
+</script>

@@ -13,7 +13,10 @@ response.menu = [
 response.menu.append( (T('Arquivo'), False, URL('media', 'index'), []))
 
 if auth.has_membership("admin") | auth.has_membership("gerente"):
-    response.menu.append((T('Shiurim'), False, URL('media', 'index'), []))
+    response.menu.append((T('Shiurim'), False, URL('media', 'index'), [
+        (T('Lista'), False, URL('media', 'index'), []),
+        (T('Kanban'), False, URL('media', 'kanban'), [])
+    ]))
     response.menu.append((T('Cadastros'), False, URL('default', 'lista'), []))
 
 # ----------------------------------------------------------------------------------------------------------------------

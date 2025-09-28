@@ -606,6 +606,81 @@ def shiurim():
 def chosen():
     return dict()
 
+def kanban():
+    """
+    Kanban board view for media_video approval status
+    """
+    response.title = "Kanban - Status de Aprovação"
+    
+    # Get all media_video records with related data
+    campos = [
+        db.media_video.id,
+        db.media_video.titulo,
+        db.media_video.aprovacao,
+        db.media_video.tipo_media,
+        db.media_video.lancado,
+        db.palestrante.nome,
+        db.categoria.nome
+    ]
+    
+    videos = db(db.media_video.id > 0).select(
+        *campos,
+        left=[
+            db.palestrante.on(db.media_video.palestrante == db.palestrante.id),
+            db.categoria.on(db.media_video.categoria == db.categoria.id)
+        ],
+        orderby=db.media_video.lancado
+    )
+    
+    # Get approval statuses (defined in models/table.py but accessible here)
+    aprovacoes = [("EP", "EM PROSPECÇÃO"),
+                  ("AT","a Traduzir"),
+                  ("TD","Traduzindo"),
+                  ("RT","Revisando Tradução"),
+                  ("PP","Pronto para publicar"),
+                  ("PB","Publicado"),
+                  ("AC","Arquivado / Catalogado"),
+                  ("RC","Recusado | Somente VDT+"),
+                  ("RT", "Recusado total"),
+                  ("PV", "Perdemos o vídeo"),
+                  ("P","Proposto"),
+                  ("C","Curadoria"),
+                  ("A","Aprovado")]
+    
+    tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
+    
+    # Group videos by approval status
+    kanban_data = {}
+    for status_code, status_name in aprovacoes:
+        kanban_data[status_code] = {
+            'name': status_name,
+            'videos': []
+        }
+    
+    for video in videos:
+        status = video['media_video']['aprovacao']
+        if status in kanban_data:
+            kanban_data[status]['videos'].append(video)
+    
+    return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media)
+
+def kanban_update():
+    """
+    AJAX endpoint to update video approval status
+    """
+    video_id = request.vars.video_id
+    new_status = request.vars.new_status
+    
+    if video_id and new_status:
+        try:
+            db(db.media_video.id == video_id).update(aprovacao=new_status)
+            db.commit()
+            return response.json({'success': True, 'message': 'Status atualizado com sucesso'})
+        except Exception as e:
+            return response.json({'success': False, 'message': str(e)})
+    
+    return response.json({'success': False, 'message': 'Parâmetros inválidos'})
+
 def postar_wa():
 
     import requests
