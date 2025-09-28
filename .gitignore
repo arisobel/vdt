@@ -8,6 +8,8 @@ __pycache__/
 logs/
 sessions/
 errors/
+languages/pt-br.py
+languages/
 *.log
 *.out
 *.bak
@@ -28,7 +30,8 @@ routes.example.py
 # Arquivos de Mídia e Conteúdo Binário Grande
 #############################################
 static/files/           # Ignora TUDO dentro da pasta files/
-static/teste/           # Se essa for uma pasta de teste com mídia
+static/teste/           # Se essa for uma pasta de teste co
+
 *.vtt
 *.mp4
 *.mp3
