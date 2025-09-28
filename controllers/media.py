@@ -606,6 +606,7 @@ def shiurim():
 def chosen():
     return dict()
 
+@auth.requires_login()
 def kanban():
     """
     Kanban board view for media_video approval status
@@ -664,22 +665,48 @@ def kanban():
     
     return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media)
 
+@auth.requires_login()
 def kanban_update():
     """
     AJAX endpoint to update video approval status
+    Requires user authentication
     """
     video_id = request.vars.video_id
     new_status = request.vars.new_status
     
-    if video_id and new_status:
-        try:
-            db(db.media_video.id == video_id).update(aprovacao=new_status)
-            db.commit()
-            return response.json({'success': True, 'message': 'Status atualizado com sucesso'})
-        except Exception as e:
-            return response.json({'success': False, 'message': str(e)})
+    # Validate input parameters
+    if not video_id or not new_status:
+        return response.json({'success': False, 'message': 'Parâmetros inválidos'})
     
-    return response.json({'success': False, 'message': 'Parâmetros inválidos'})
+    # Valid approval statuses
+    valid_statuses = ["EP", "AT", "TD", "RT", "PP", "PB", "AC", "RC", "PV", "P", "C", "A"]
+    
+    if new_status not in valid_statuses:
+        return response.json({'success': False, 'message': 'Status de aprovação inválido'})
+    
+    try:
+        # Check if video exists
+        video = db(db.media_video.id == video_id).select().first()
+        if not video:
+            return response.json({'success': False, 'message': 'Vídeo não encontrado'})
+        
+        # Update the status
+        db(db.media_video.id == video_id).update(aprovacao=new_status)
+        db.commit()
+        
+        return response.json({
+            'success': True, 
+            'message': 'Status atualizado com sucesso',
+            'video_id': video_id,
+            'new_status': new_status
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return response.json({
+            'success': False, 
+            'message': f'Erro interno: {str(e)}'
+        })
 
 def postar_wa():
 
