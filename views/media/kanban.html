@@ -9,14 +9,20 @@
     padding: 20px;
     overflow-x: auto;
     min-height: 600px;
+    max-height: 80vh;
+    overflow-y: hidden;
 }
 
 .kanban-column {
     min-width: 300px;
+    max-width: 300px;
     background-color: #f8f9fa;
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(80vh - 40px);
 }
 
 .kanban-column-header {
@@ -32,7 +38,10 @@
 
 .kanban-cards {
     min-height: 500px;
+    max-height: calc(80vh - 150px);
     padding: 5px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .kanban-card {
@@ -152,6 +161,47 @@
     0%, 50% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+/* Add Card Button */
+.add-card-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #fff;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-card-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.add-card-btn i {
+    font-size: 16px;
+}
+
+/* Modal customizations */
+.modal-dialog {
+    max-width: 600px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    width: 100%;
+}
 </style>
 {{end}}
 
@@ -204,9 +254,87 @@
                             Nenhum item nesta coluna
                         </div>
                     {{pass}}
+                    
+                    <!-- Add Card Button -->
+                    <div class="add-card-btn" data-status="{{=status_code}}" onclick="showAddCardModal('{{=status_code}}', '{{=status_name}}')">
+                        <i class="bi bi-plus-circle"></i>
+                        Adicionar Card
+                    </div>
                 </div>
             </div>
         {{pass}}
+    </div>
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal fade" id="addCardModal" tabindex="-1" role="dialog" aria-labelledby="addCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCardModalLabel">Adicionar Novo Card</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addCardForm">
+                    <input type="hidden" id="selectedStatus" name="status" value="">
+                    
+                    <div class="form-group">
+                        <label for="cardTitle">Título *</label>
+                        <input type="text" class="form-control" id="cardTitle" name="titulo" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardDescription">Resenha</label>
+                        <textarea class="form-control" id="cardDescription" name="resenha" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cardType">Tipo de Mídia *</label>
+                                <select class="form-control" id="cardType" name="tipo_media" required>
+                                    {{for code, name in tipos_media:}}
+                                        <option value="{{=code}}">{{=name}}</option>
+                                    {{pass}}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cardCategory">Categoria</label>
+                                <select class="form-control" id="cardCategory" name="categoria">
+                                    <option value="">Selecione uma categoria</option>
+                                    {{for categoria in categorias:}}
+                                        <option value="{{=categoria.id}}">{{=categoria.nome}}</option>
+                                    {{pass}}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardSpeaker">Palestrante</label>
+                        <select class="form-control" id="cardSpeaker" name="palestrante">
+                            <option value="">Selecione um palestrante</option>
+                            {{for palestrante in palestrantes:}}
+                                <option value="{{=palestrante.id}}">{{=palestrante.nome}}</option>  
+                            {{pass}}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardLink">Link</label>
+                        <input type="url" class="form-control" id="cardLink" name="link" placeholder="https://...">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="addNewCard()">Adicionar Card</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -292,4 +420,67 @@ $(document).ready(function() {
         });
     }
 });
+
+// Show add card modal
+function showAddCardModal(statusCode, statusName) {
+    $('#selectedStatus').val(statusCode);
+    $('#addCardModalLabel').text('Adicionar Novo Card - ' + statusName);
+    $('#addCardForm')[0].reset();
+    $('#selectedStatus').val(statusCode); // Reset clears this, so set again
+    $('#addCardModal').modal('show');
+}
+
+// Add new card
+function addNewCard() {
+    var form = $('#addCardForm');
+    var formData = {
+        titulo: $('#cardTitle').val(),
+        resenha: $('#cardDescription').val(),
+        tipo_media: $('#cardType').val(),
+        categoria: $('#cardCategory').val(),
+        palestrante: $('#cardSpeaker').val(),
+        link: $('#cardLink').val(),
+        aprovacao: $('#selectedStatus').val()
+    };
+    
+    // Basic validation
+    if (!formData.titulo.trim()) {
+        showFeedback('error', 'Título é obrigatório');
+        return;
+    }
+    
+    if (!formData.tipo_media) {
+        showFeedback('error', 'Tipo de mídia é obrigatório');
+        return;
+    }
+    
+    // Show loading state
+    $('button[onclick="addNewCard()"]').prop('disabled', true).text('Adicionando...');
+    
+    // Submit via AJAX
+    $.ajax({
+        url: '{{=URL("media", "kanban_add_card")}}',
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showFeedback('success', 'Card adicionado com sucesso!');
+                $('#addCardModal').modal('hide');
+                
+                // Reload the page to show the new card
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showFeedback('error', 'Erro: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão. Tente novamente.');
+        },
+        complete: function() {
+            $('button[onclick="addNewCard()"]').prop('disabled', false).text('Adicionar Card');
+        }
+    });
+}
 </script>
