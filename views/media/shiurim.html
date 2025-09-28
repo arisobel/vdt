@@ -443,26 +443,74 @@
     padding: 5px; /* Espaçamento interno para o texto */
 }
 
+/* Fix Select2 input accessibility */
+.select2-container .select2-search--inline .select2-search__field {
+    pointer-events: auto !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    outline: none !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.select2-container--default .select2-selection--multiple {
+    cursor: text !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
 
 {{ end style }}
 
 
 {{ block script }}
 
-// Initialize Select2 for palestrante with tagging functionality
-$('#palests').select2({
-  width: "100%",
-  tags: true,
-  placeholder: "Digite para pesquisar ou adicionar novo palestrante..."
-});
+$(document).ready(function() {
+    // Initialize Select2 for palestrante with tagging functionality
+    $('#palests').select2({
+      width: "100%",
+      tags: true,
+      placeholder: "Digite para pesquisar ou adicionar novo palestrante...",
+      allowClear: true,
+      minimumInputLength: 0,
+      tokenSeparators: [',', ' '],
+      createTag: function (params) {
+        var term = $.trim(params.term);
+        
+        if (term === '') {
+          return null;
+        }
+        
+        return {
+          id: term,
+          text: term,
+          newTag: true // add a flag to indicate this is a new tag
+        };
+      }
+    });
 
-// Handle new palestrante creation
-$('#palests').on('select2:select', function (e) {
-  var data = e.params.data;
-  if (data.newTag) {
-    // This is a new tag, call the backend to add it
-    addNewPalestrante(data.text, $(this));
-  }
+    // Handle new palestrante creation
+    $('#palests').on('select2:select', function (e) {
+      var data = e.params.data;
+      if (data.newTag) {
+        // This is a new tag, call the backend to add it
+        addNewPalestrante(data.text, $(this));
+      }
+    });
+
+    // Initialize other Select2 dropdowns
+    $('#categs').select2({
+      width: "100%"
+    });
+
+    $('#tags').select2({
+      width: "100%"
+    });
 });
 
 function addNewPalestrante(nome, $selectElement) {
@@ -526,26 +574,7 @@ function addNewPalestrante(nome, $selectElement) {
 
 $('#erase-date').on('click', function(){
     $("#desde").val('');
-})
-
-
-
-/*.on('change', function() {
-    // Find the chosen container
-    var chosenContainer = $(this).next('.chosen-container');
-    
-    // Add a custom class to each selected choice
-    chosenContainer.find('.search-choice').addClass('badge');
 });
-*/
-
-$('#categs').select2({
-  width: "100%"
-})
-
-$('#tags').select2({
-  width: "100%"
-})
 
 $('.chosen-toggle').each(function(index) {
   console.log(index);
