@@ -183,6 +183,28 @@
     100% { opacity: 0; }
 }
 
+/* Custom styling for add palestrante button in Chosen dropdown */
+.chosen-results .no-results .add-palestrante-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    margin-left: 5px;
+    border: none;
+    border-radius: 3px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chosen-results .no-results .add-palestrante-btn:hover {
+    background-color: #0056b3;
+}
+
+.chosen-results .no-results {
+    padding: 8px;
+    color: #666;
+}
+
 /* Add Card Button */
 .add-card-btn {
     width: 100%;
@@ -301,12 +323,12 @@
                         Nenhum card sem editor atribuído
                     </div>
                 {{pass}}
-                
-                <!-- Add Card Button for AT status -->
-                <div class="add-card-btn" data-status="AT" onclick="showAddCardModal('AT', 'A Traduzir')">
-                    <i class="bi bi-plus-circle"></i>
-                    Adicionar Card AT
-                </div>
+            </div>
+
+            <!-- Add Card Button for AT status -->
+            <div class="add-card-btn" data-status="AT" onclick="showAddCardModal('AT', 'A Traduzir')">
+                <i class="bi bi-plus-circle"></i>
+                Adicionar Card AT
             </div>
         </div>
 
@@ -356,15 +378,16 @@
                             Nenhum card atribuído
                         </div>
                     {{pass}}
-                    
-                    <!-- Add Card Button for TD status -->
-                    <div class="add-card-btn" data-status="TD" onclick="showAddCardModal('TD', 'Traduzindo')">
-                        <i class="bi bi-plus-circle"></i>
-                        Adicionar Card TD
-                    </div>
+                </div>
+
+                <!-- Add Card Button for TD status -->
+                <div class="add-card-btn" data-status="TD" onclick="showAddCardModal('TD', 'Traduzindo')">
+                    <i class="bi bi-plus-circle"></i>
+                    Adicionar Card TD
                 </div>
             </div>
         {{pass}}
+
     </div>
 </div>
 
@@ -456,10 +479,13 @@
 <script>
 $(document).ready(function() {
     // Initialize chosen selectors for better UX
-    $('#cardSpeaker, #cardEditor, #cardCategory').chosen({
+    $('#cardEditor, #cardCategory').chosen({
         width: '100%',
         no_results_text: 'Nenhum resultado encontrado para'
     });
+    
+    // Initialize custom Chosen for palestrante with add-on button
+    initChosenPalestrante();
     
     // Make cards sortable between columns
     $('.kanban-cards').sortable({
@@ -696,6 +722,118 @@ function addNewCard() {
         },
         error: function() {
             showFeedback('error', 'Erro de conexão. Tente novamente.');
+        }
+    });
+}
+</script>
+
+<script>
+// Initialize Chosen for the palestrante select with add-new support
+function escapeHtml(text) {
+    if (!text) {
+        return '';
+    }
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function initChosenPalestrante() {
+    $('#cardSpeaker').chosen({
+        width: '100%',
+        placeholder_text_single: 'Digite para pesquisar ou adicionar novo palestrante...',
+        no_results_text: 'Nenhum resultado encontrado para',
+        allow_single_deselect: true
+    });
+
+    // Customize the no results message to include an Add button
+    $('#cardSpeaker').on('chosen:no_results', function(event, params) {
+        var searchField = params.chosen.search_field;
+        if (!searchField) {
+            return;
+        }
+
+        var searchText = searchField.val().trim();
+        if (!searchText) {
+            return;
+        }
+
+        var escapedSearch = escapeHtml(searchText);
+        var messageHtml = 'Nenhum resultado encontrado para "<strong>' + escapedSearch + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;">Adicionar</button>';
+
+        var $noResults = params.chosen.container.find('.no-results');
+        if ($noResults.length === 0) {
+            return;
+        }
+
+        $noResults.html(messageHtml);
+        $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
+    });
+
+    // Handle click on the Add button inside Chosen dropdown
+    $('#cardSpeaker_chosen').on('click', '.add-palestrante-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var nome = $(this).attr('data-nome');
+        if (nome && nome.trim()) {
+            addNewPalestrante(nome.trim());
+        }
+    });
+}
+
+function addNewPalestrante(nome) {
+    if (!nome || nome.trim() === '') {
+        return;
+    }
+
+    nome = nome.trim();
+
+    // Clear the search field
+    $('#cardSpeaker_chosen .search-field input').val('');
+
+    // Show loading state on Chosen
+    var $chosen = $('#cardSpeaker_chosen');
+    $chosen.addClass('chosen-disabled');
+
+    $.ajax({
+        url: '{{=URL("media", "add_palestrante")}}',
+        method: 'POST',
+        data: { nome: nome },
+        success: function(response) {
+            if (response.success) {
+                var existingOption = $('#cardSpeaker option[value="' + response.palestrante_id + '"]');
+                var addedNew = false;
+                if (existingOption.length === 0) {
+                    var newOption = $('<option value="' + response.palestrante_id + '" selected>' + response.nome + '</option>');
+                    $('#cardSpeaker').append(newOption);
+                    addedNew = true;
+                } else {
+                    existingOption.prop('selected', true);
+                }
+
+                // Update chosen and close dropdown
+                $('#cardSpeaker').trigger('chosen:updated');
+                $('#cardSpeaker').trigger('chosen:close');
+
+                // Feedback independent of server message encoding
+                if (addedNew) {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" adicionado com sucesso!');
+                } else {
+                    showFeedback('success', 'Palestrante "' + response.nome + '" selecionado!');
+                }
+            } else {
+                showFeedback('error', 'Erro ao adicionar palestrante: ' + response.message);
+            }
+        },
+        error: function() {
+            showFeedback('error', 'Erro de conexão ao adicionar palestrante.');
+        },
+        complete: function() {
+            $chosen.removeClass('chosen-disabled');
         }
     });
 }
