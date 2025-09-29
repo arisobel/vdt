@@ -326,7 +326,7 @@
             </div>
 
             <!-- Add Card Button for AT status -->
-            <div class="add-card-btn" data-status="AT" onclick="showAddCardModal('AT', 'A Traduzir')">
+            <div class="add-card-btn" data-status="AT" onclick="showAddCardModal('AT', 'A Traduzir', null)">
                 <i class="bi bi-plus-circle"></i>
                 Adicionar Card AT
             </div>
@@ -381,7 +381,7 @@
                 </div>
 
                 <!-- Add Card Button for TD status -->
-                <div class="add-card-btn" data-status="TD" onclick="showAddCardModal('TD', 'Traduzindo')">
+                <div class="add-card-btn" data-status="TD" onclick="showAddCardModal('TD', 'Traduzindo', '{{=editor.id}}')">
                     <i class="bi bi-plus-circle"></i>
                     Adicionar Card TD
                 </div>
@@ -568,11 +568,18 @@ function updateColumnCounts() {
 }
 
 // Show add card modal
-function showAddCardModal(status, statusName) {
+function showAddCardModal(status, statusName, editorId) {
     // Clear form
     $('#addCardForm')[0].reset();
     $('#cardId').val('');
     $('#selectedStatus').val(status);
+    
+    // Preselect editor based on column (null/undefined clears selection)
+    if (editorId) {
+        $('#cardEditor').val(editorId);
+    } else {
+        $('#cardEditor').val('');
+    }
     
     // Update modal title and button
     $('#addCardModalLabel').text('Adicionar Novo Card - ' + statusName);
