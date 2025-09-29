@@ -666,6 +666,18 @@ $(document).ready(function() {
     initChosenPalestrante();
 });
 
+function escapeHtml(text) {
+    if (!text) {
+        return '';
+    }
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function initChosenPalestrante() {
     $('#cardSpeaker').chosen({
         width: "100%",
@@ -674,39 +686,28 @@ function initChosenPalestrante() {
         allow_single_deselect: true
     });
 
-    // Handle the search input and add button when no results found
-    $('#cardSpeaker_chosen').on('input', '.search-field input', function(e) {
-        var searchText = $(this).val().trim();
-
-        if (searchText) {
-            setTimeout(function() {
-                var $chosenResults = $('#cardSpeaker_chosen .chosen-results');
-                var $noResults = $('#cardSpeaker_chosen .no-results');
-                var activeResults = $chosenResults.find('.active-result').length;
-
-                // Se não há resultados ativos, adiciona (ou atualiza) o botão manualmente
-                if (activeResults === 0) {
-                    // Se .no-results não existe, cria
-                    if ($noResults.length === 0) {
-                        $chosenResults.append(
-                            '<li class="no-results">Nenhum resultado encontrado para "<strong>' + searchText + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;" data-nome="' + searchText + '">Adicionar</button></li>'
-                        );
-                    } else {
-                        // Atualiza texto e data-nome do botão existente
-                        $noResults.find('strong').text(searchText);
-                        $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
-                    }
-                } else {
-                    // Remove o botão se aparecer resultados novamente
-                    if ($noResults.length > 0) {
-                        $noResults.remove();
-                    }
-                }
-            }, 100);
-        } else {
-            // Remove botão se campo de busca esvaziar
-            $('#cardSpeaker_chosen .no-results').remove();
+    // Substitui a mensagem padrão do Chosen quando não houver resultados
+    $('#cardSpeaker').on('chosen:no_results', function(event, params) {
+        var searchField = params.chosen.search_field;
+        if (!searchField) {
+            return;
         }
+
+        var searchText = searchField.val().trim();
+        if (!searchText) {
+            return;
+        }
+
+        var escapedSearch = escapeHtml(searchText);
+        var messageHtml = 'Nenhum resultado encontrado para "<strong>' + escapedSearch + '</strong>". <button type="button" class="add-palestrante-btn btn btn-sm btn-primary" style="margin-left: 5px;">Adicionar</button>';
+
+        var $noResults = params.chosen.container.find('.no-results');
+        if ($noResults.length === 0) {
+            return;
+        }
+
+        $noResults.html(messageHtml);
+        $noResults.find('.add-palestrante-btn').attr('data-nome', searchText);
     });
 
     // Handle click on the "Add" button
