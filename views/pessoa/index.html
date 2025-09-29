@@ -38,12 +38,52 @@
                                 {{=form.custom.widget.funcao}}
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label >{{=db.auth_user.cel.label}}</label>
+                                {{=form.custom.widget.cel}}
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label >{{=db.auth_user.entrada.label}}</label>
+                                {{=form.custom.widget.entrada}}
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <label>{{=db.auth_user.ativo.label}}</label><br>
+                                <div class="check-container col-md-12">
+                                    {{=form.custom.widget.ativo}}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <label>{{=db.auth_user.editores.label}}</label><br>
+                                <div class="check-container col-md-12">
+                                    {{=form.custom.widget.editores}}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label >{{=db.auth_user.obs.label}}</label>
+                                {{=form.custom.widget.obs}}
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-md-12">
                                 <label >{{=db.auth_user.aulas.label}}</label>
                                 {{=form.custom.widget.aulas}}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label >{{=db.auth_user.foto.label}}</label>
+                                {{=form.custom.widget.foto}}
                             </div>
                         </div>
                    </div>
@@ -124,3 +164,16 @@
    }
 
 </script>
+
+<style>
+    .check-container {
+        display: flex;
+        align-items: center;
+        justify-content: center; 
+    }
+    
+    /* Estilo para aumentar o tamanho do checkbox */
+    .form-check-input {
+        transform: scale(2.5); /* Ajuste este valor conforme necessário */
+    }
+</style>
