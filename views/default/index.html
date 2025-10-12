@@ -105,7 +105,7 @@
       <div class="item {{='active' if loops_cr==0 else''}}">
 
         {{if c.imagem:}}
-		   <img class="first-slide" src="{{=URL('static','files', args=c.imagem)}}" alt="First slide">
+		   <img class="first-slide" src="{{=URL('default','download', args=c.imagem)}}" alt="First slide">
 
         {{else:}}
            <img class="first-slide" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="First slide">
@@ -186,7 +186,7 @@
 	          {{='target=_blank' if m.nova_guia else ''}}
 
 		   >
-				<img src="{{=URL('static','files', args=img)}}" {{='class=img-circle' if m.redondo else '' }} width="140" height="140" alt="Italian Trulli" role="img" >
+				<img src="{{=URL('default','download', args=img)}}" {{='class=img-circle' if m.redondo else '' }} width="140" height="140" alt="Italian Trulli" role="img" >
 		   </a>
           <!--<img src="{{=URL('static','images/image.file/', args=img)}}" class="bd-placeholder-img rounded-circle" width="140" height="140" alt="Italian Trulli" role="img" > -->
 
@@ -240,7 +240,7 @@
       </div>
       <div class='{{="col-md-5 col-md-pull-7" if left else "col-md-5"}}'>
        {{if f.imagem:}}
-           <img src="{{=URL('static','files', args=f.imagem)}}" class="featurette-image img-responsive center-block" width="500" height="500" alt="Italian Trulli" role="img" >
+           <img src="{{=URL('default','download', args=f.imagem)}}" class="featurette-image img-responsive center-block" width="500" height="500" alt="Italian Trulli" role="img" >
        {{ else: }}
         <svg class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#eee"/><text x="50%" y="50%" fill="#aaa" dy=".3em">500x500</text></svg>
        {{ pass }}
