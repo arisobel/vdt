@@ -26,6 +26,46 @@
     max-height: calc(80vh - 40px);
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    .kanban-board {
+        gap: 15px;
+        padding: 10px;
+        min-height: auto;
+        max-height: none;
+    }
+    
+    .kanban-column {
+        min-width: 280px;
+        max-width: 280px;
+        padding: 12px;
+        max-height: none;
+    }
+    
+    .kanban-column-header {
+        font-size: 13px;
+        padding: 8px;
+    }
+    
+    .kanban-cards {
+        min-height: 300px;
+        max-height: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .kanban-board {
+        gap: 10px;
+        padding: 5px;
+    }
+    
+    .kanban-column {
+        min-width: calc(100vw - 30px);
+        max-width: calc(100vw - 30px);
+        padding: 10px;
+    }
+}
+
 .kanban-column.unassigned {
     border: 2px solid #dc3545;
     background-color: #fdf2f2;
@@ -74,6 +114,16 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     transition: all 0.2s ease;
     position: relative;
+    touch-action: none; /* Better touch support */
+}
+
+/* Mobile: larger touch targets */
+@media (max-width: 768px) {
+    .kanban-card {
+        padding: 15px;
+        margin-bottom: 12px;
+        min-height: 80px;
+    }
 }
 
 .kanban-card.status-AT {
@@ -111,6 +161,11 @@
 .kanban-card.ui-sortable-helper {
     transform: rotate(5deg);
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.kanban-card.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
 }
 
 .kanban-card-title {
@@ -274,6 +329,7 @@
         <div class="col-12">
             <h2><i class="bi bi-kanban"></i> Kanban - Distribuição de Editores</h2>
             <p class="text-muted">Arraste os cards AT/TD entre as colunas para atribuir/remover editores responsáveis</p>
+            <p class="text-muted d-md-none"><small><i class="bi bi-hand-index-thumb"></i> Toque e segure por um momento antes de arrastar no celular</small></p>
             <div id="feedback-area"></div>
         </div>
     </div>
@@ -475,6 +531,7 @@
 </div>
 
 <script src="{{=URL('static','js/jquery-ui.min.js')}}"></script>
+<script src="{{=URL('static','js/jquery.ui.touch-punch.min.js')}}"></script>
 <script src="{{=URL('static','plugins/chosen/chosen.jquery.min.js')}}"></script>
 <script>
 $(document).ready(function() {
@@ -487,18 +544,31 @@ $(document).ready(function() {
     // Initialize custom Chosen for palestrante with add-on button
     initChosenPalestrante();
     
-    // Make cards sortable between columns
+    // Detect if mobile device
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    // Make cards sortable between columns with mobile-optimized settings
     $('.kanban-cards').sortable({
         connectWith: '.kanban-cards',
         placeholder: 'ui-state-highlight',
         tolerance: 'pointer',
         helper: 'clone',
+        distance: isMobile ? 10 : 5, // Increased distance for mobile to prevent accidental drags
+        delay: isMobile ? 200 : 0, // Add delay on mobile for better touch detection
         start: function(e, ui) {
             ui.placeholder.height(ui.item.height());
+            ui.item.addClass('dragging');
             $(this).addClass('loading');
+            
+            // On mobile, add a visual indicator
+            if (isMobile) {
+                ui.item.css('opacity', '0.6');
+            }
         },
         stop: function(e, ui) {
             $(this).removeClass('loading');
+            ui.item.removeClass('dragging');
+            ui.item.css('opacity', '1');
             
             var videoId = ui.item.data('video-id');
             var newEditorId = ui.item.closest('.kanban-cards').data('editor-id');

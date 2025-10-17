@@ -26,6 +26,46 @@
     max-height: calc(80vh - 40px);
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    .kanban-board {
+        gap: 15px;
+        padding: 10px;
+        min-height: auto;
+        max-height: none;
+    }
+    
+    .kanban-column {
+        min-width: 280px;
+        max-width: 280px;
+        padding: 12px;
+        max-height: none;
+    }
+    
+    .kanban-column-header {
+        font-size: 13px;
+        padding: 8px;
+    }
+    
+    .kanban-cards {
+        min-height: 300px;
+        max-height: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .kanban-board {
+        gap: 10px;
+        padding: 5px;
+    }
+    
+    .kanban-column {
+        min-width: calc(100vw - 30px);
+        max-width: calc(100vw - 30px);
+        padding: 10px;
+    }
+}
+
 .kanban-column-header {
     font-weight: bold;
     font-size: 14px;
@@ -55,6 +95,16 @@
     border-left: 4px solid #007bff;
     transition: all 0.2s ease;
     position: relative;
+    touch-action: none; /* Better touch support */
+}
+
+/* Mobile: larger touch targets */
+@media (max-width: 768px) {
+    .kanban-card {
+        padding: 15px;
+        margin-bottom: 12px;
+        min-height: 80px;
+    }
 }
 
 .kanban-card .edit-icon {
@@ -84,6 +134,11 @@
 .kanban-card.ui-sortable-helper {
     transform: rotate(5deg);
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.kanban-card.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
 }
 
 .kanban-card-title {
@@ -253,6 +308,7 @@
         <div class="col-12">
             <h2><i class="bi bi-kanban"></i> Kanban - Status de Aprovação</h2>
             <p class="text-muted">Arraste os cards entre as colunas para alterar o status de aprovação</p>
+            <p class="text-muted d-md-none"><small><i class="bi bi-hand-index-thumb"></i> Toque e segure por um momento antes de arrastar no celular</small></p>
             <div id="feedback-area"></div>
         </div>
     </div>
@@ -399,21 +455,34 @@
     </div>
 </div>
 
+<script src="{{=URL('static','js/jquery.ui.touch-punch.min.js')}}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize sortable functionality
+    // Detect if mobile device
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    // Initialize sortable functionality with mobile-optimized settings
     $(".kanban-cards").sortable({
         connectWith: ".kanban-cards",
         placeholder: "ui-sortable-placeholder",
         cursor: "move",
-        tolerance: "pointer",
-        distance: 5,
+        tolerance: isMobile ? "pointer" : "pointer",
+        distance: isMobile ? 10 : 5, // Increased distance for mobile to prevent accidental drags
+        delay: isMobile ? 200 : 0, // Add delay on mobile for better touch detection
         start: function(e, ui) {
             ui.placeholder.height(ui.item.height());
+            ui.item.addClass('dragging');
             $(this).addClass('loading');
+            
+            // On mobile, add a visual indicator
+            if (isMobile) {
+                ui.item.css('opacity', '0.6');
+            }
         },
         stop: function(e, ui) {
             $(this).removeClass('loading');
+            ui.item.removeClass('dragging');
+            ui.item.css('opacity', '1');
             
             var videoId = ui.item.data('video-id');
             var newStatus = ui.item.closest('.kanban-cards').data('status');
