@@ -466,7 +466,7 @@ $(document).ready(function() {
         connectWith: ".kanban-cards",
         placeholder: "ui-sortable-placeholder",
         cursor: "move",
-        tolerance: isMobile ? "pointer" : "pointer",
+        tolerance: "pointer",
         distance: isMobile ? 10 : 5, // Increased distance for mobile to prevent accidental drags
         delay: isMobile ? 200 : 0, // Add delay on mobile for better touch detection
         start: function(e, ui) {
