@@ -1259,7 +1259,7 @@ def postar_wa():
         ret['success'] = True
         ret.update(dict(media_id=id_video, msg_id=id_message, wa_grupo=gpid))
     else:
-        print(f"❌ Falha ao enviar o vídeo. Status code: {response.status_code}")
+        print(f"❌ Falha ao enviar o vídeo. Status code: {resposta.status_code}")
         print("Resposta:", resposta.text)
         ret['erro'] =  resposta.text
         ret['success'] = False

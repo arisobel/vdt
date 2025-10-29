@@ -382,8 +382,7 @@
                                         <button class="btn btn-sm btn-outline-success publish-btn" 
                                                 data-video-id="{{=video['media_video']['id']}}"
                                                 data-video-file="{{=video['media_video']['arquivo']}}"
-                                                title="Publicar no WhatsApp"
-                                                onclick="showPublishModal({{=video['media_video']['id']}}, '{{=video['media_video']['arquivo']}}'); event.stopPropagation();">
+                                                title="Publicar no WhatsApp">
                                             <i class="bi bi-send"></i> Publicar
                                         </button>
                                     {{pass}}
@@ -596,6 +595,17 @@ $(document).ready(function() {
             });
         }
     }).disableSelection();
+    
+    // Handle publish button clicks
+    $(document).on('click', '.publish-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var videoId = $(this).data('video-id');
+        var videoFile = $(this).data('video-file');
+        
+        showPublishModal(videoId, videoFile);
+    });
 });
 
 // Show feedback messages
@@ -951,8 +961,12 @@ function publishVideo() {
         return;
     }
     
-    // Build URL for postar_wa endpoint
-    var url = '{{=URL("media", "postar_wa")}}/' + videoId + '/' + groupId + '/' + gpid + '/' + videoFile;
+    // Build URL for postar_wa endpoint with proper encoding
+    var url = '{{=URL("media", "postar_wa")}}/' + 
+              encodeURIComponent(videoId) + '/' + 
+              encodeURIComponent(groupId) + '/' + 
+              encodeURIComponent(gpid) + '/' + 
+              encodeURIComponent(videoFile);
     
     // Show loader and disable button
     $('#publishLoader').show();
