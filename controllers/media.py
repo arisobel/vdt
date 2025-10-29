@@ -627,6 +627,7 @@ def kanban():
         db.media_video.tipo_media,
         db.media_video.lancado,
         db.media_video.editor_responsavel,
+        db.media_video.arquivo,
         db.palestrante.nome,
         db.categoria.nome,
         db.auth_user.nome
@@ -664,6 +665,9 @@ def kanban():
     palestrantes = db(db.palestrante.id > 0).select(db.palestrante.id, db.palestrante.nome, orderby=db.palestrante.nome)
     # Get only users who are editors (editores = True)
     editores = db(db.auth_user.editores == True).select(db.auth_user.id, db.auth_user.nome, orderby=db.auth_user.nome)
+    
+    # Get wa_groups for posting functionality
+    grupos = db(db.wa_group.id>0).select()
 
     # Group videos by approval status
     kanban_data = {}
@@ -679,7 +683,7 @@ def kanban():
             kanban_data[status]['videos'].append(video)
 
     return dict(kanban_data=kanban_data, aprovacoes=aprovacoes, tipos_media=tipos_media,
-                categorias=categorias, palestrantes=palestrantes, editores=editores)
+                categorias=categorias, palestrantes=palestrantes, editores=editores, grupos=grupos)
 
 @auth.requires_login()
 def kanban_update():
@@ -1242,12 +1246,22 @@ def postar_wa():
         ret_j = resposta.json()
         id_message = ret_j['results']['message_id']
         id_post = db.media_post.insert(media_id=id_video, msg_id=id_message, wa_group=gpid)
+        
+        # Update video status to "Publicado" (PB) and set publication date
+        from datetime import date
+        db(db.media_video.id == id_video).update(
+            aprovacao='PB',
+            publicado=date.today()
+        )
+        
         db.commit()
         ret['id_post'] = id_post
+        ret['success'] = True
         ret.update(dict(media_id=id_video, msg_id=id_message, wa_grupo=gpid))
     else:
         print(f"❌ Falha ao enviar o vídeo. Status code: {response.status_code}")
         print("Resposta:", resposta.text)
         ret['erro'] =  resposta.text
+        ret['success'] = False
 
     return response.json(ret)
