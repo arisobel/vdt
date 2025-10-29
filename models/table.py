@@ -103,6 +103,7 @@ db.define_table('media_video',
                 Field('minutes', 'integer'),
                 Field('criado_por', 'integer', label="user", default=auth.user_id),
                 Field('editor_responsavel', 'reference auth_user', label="Editor Responsável"),
+                Field('publicado', 'date', label="Data de Publicação"),
                 )
 
 db.media_video._after_update.append(lambda s, f: atualiza_tags(s, f))
