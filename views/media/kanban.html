@@ -158,6 +158,25 @@
     margin-top: 8px;
 }
 
+.kanban-card-footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+}
+
+.kanban-card-footer .btn {
+    font-size: 11px;
+    padding: 4px 8px;
+    flex: 1;
+}
+
+.kanban-card-footer .btn i {
+    font-size: 12px;
+}
+
 .kanban-card-type {
     display: inline-block;
     padding: 2px 8px;
@@ -353,6 +372,22 @@
                                         <i class="bi bi-pencil-square"></i> {{=video['auth_user']['nome']}}
                                     </div>
                                 {{pass}}
+                                
+                                <!-- Card Footer with Action Buttons -->
+                                <div class="kanban-card-footer">
+                                    <a href="{{=URL('media','edit', args=video['media_video']['id'])}}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                    {{if video['media_video']['arquivo']:}}
+                                        <button class="btn btn-sm btn-outline-success publish-btn" 
+                                                data-video-id="{{=video['media_video']['id']}}"
+                                                data-video-file="{{=video['media_video']['arquivo']}}"
+                                                title="Publicar no WhatsApp"
+                                                onclick="showPublishModal({{=video['media_video']['id']}}, '{{=video['media_video']['arquivo']}}'); event.stopPropagation();">
+                                            <i class="bi bi-send"></i> Publicar
+                                        </button>
+                                    {{pass}}
+                                </div>
                             </div>
                         {{pass}}
                     {{else:}}
@@ -450,6 +485,47 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="modalActionButton" onclick="saveCard()">Adicionar Card</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" role="dialog" aria-labelledby="publishModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="publishModalLabel">Publicar Vídeo no WhatsApp</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="publishVideoId" value="">
+                <input type="hidden" id="publishVideoFile" value="">
+                
+                <div class="form-group">
+                    <label for="publishGroup">Selecione o Grupo do WhatsApp *</label>
+                    <select class="form-control" id="publishGroup" required>
+                        <option value="">Selecione um grupo...</option>
+                        {{for grupo in grupos:}}
+                            <option value="{{=grupo.group_id}}" data-gp-id="{{=grupo.id}}">{{=grupo.group_name}}</option>
+                        {{pass}}
+                    </select>
+                </div>
+                
+                <div id="publishFeedback"></div>
+                
+                <div id="publishLoader" style="display: none; text-align: center; padding: 20px;">
+                    <img src="{{=URL('static','images/loader.gif')}}" style="height: 50px;" alt="Carregando...">
+                    <p>Publicando vídeo... Por favor aguarde.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="publishButton" onclick="publishVideo()">
+                    <i class="bi bi-send"></i> Publicar
+                </button>
             </div>
         </div>
     </div>
@@ -844,5 +920,78 @@ function addNewPalestrante(nome) {
             $chosen.removeClass('chosen-disabled');
         }
     });
+}
+
+// Show publish modal
+function showPublishModal(videoId, videoFile) {
+    $('#publishVideoId').val(videoId);
+    $('#publishVideoFile').val(videoFile);
+    $('#publishGroup').val('');
+    $('#publishFeedback').empty();
+    $('#publishLoader').hide();
+    $('#publishButton').prop('disabled', false).show();
+    $('#publishModal').modal('show');
+}
+
+// Publish video to WhatsApp
+function publishVideo() {
+    var videoId = $('#publishVideoId').val();
+    var videoFile = $('#publishVideoFile').val();
+    var groupId = $('#publishGroup').val();
+    var gpid = $('#publishGroup').find(':selected').attr('data-gp-id');
+    
+    // Validation
+    if (!groupId) {
+        showPublishFeedback('error', 'Por favor, selecione um grupo do WhatsApp');
+        return;
+    }
+    
+    if (!videoFile) {
+        showPublishFeedback('error', 'Este vídeo não possui arquivo para publicação');
+        return;
+    }
+    
+    // Build URL for postar_wa endpoint
+    var url = '{{=URL("media", "postar_wa")}}/' + videoId + '/' + groupId + '/' + gpid + '/' + videoFile;
+    
+    // Show loader and disable button
+    $('#publishLoader').show();
+    $('#publishButton').prop('disabled', true);
+    $('#publishFeedback').empty();
+    
+    // Make AJAX request
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            $('#publishLoader').hide();
+            
+            if (data.success) {
+                showPublishFeedback('success', 'Vídeo publicado com sucesso!');
+                
+                // Close modal after 2 seconds and reload page to show updated card position
+                setTimeout(function() {
+                    $('#publishModal').modal('hide');
+                    location.reload();
+                }, 2000);
+            } else {
+                showPublishFeedback('error', 'Erro ao publicar: ' + (data.erro || 'Erro desconhecido'));
+                $('#publishButton').prop('disabled', false);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            $('#publishLoader').hide();
+            showPublishFeedback('error', 'Erro de conexão: ' + textStatus);
+            $('#publishButton').prop('disabled', false);
+        }
+    });
+}
+
+// Show feedback in publish modal
+function showPublishFeedback(type, message) {
+    var feedbackClass = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+    var feedbackHtml = '<div class="' + feedbackClass + '">' + message + '</div>';
+    $('#publishFeedback').html(feedbackHtml);
 }
 </script>
