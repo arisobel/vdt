@@ -1156,6 +1156,83 @@ def add_palestrante():
             'message': f'Erro interno: {str(e)}'
         })
 
+@auth.requires_login()
+def calend():
+    """
+    Calendar view for published media
+    Shows media publications by date with month navigation
+    """
+    import calendar
+    
+    # Get year and month from URL args or use current date
+    if request.args(0) and request.args(1):
+        year, month = int(request.args(0)), int(request.args(1))
+    else:
+        year, month = datetime.today().year, datetime.today().month
+    
+    # Generate calendar for the month
+    calend = calendar.monthcalendar(year, month)
+    
+    # Get published media for this month
+    query = (db.media_video.lancado.year() == year) & (db.media_video.lancado.month() == month)
+    
+    # Get all media with related data
+    campos = [
+        db.media_video.id,
+        db.media_video.titulo,
+        db.media_video.lancado,
+        db.media_video.tipo_media,
+        db.media_video.aprovacao,
+        db.palestrante.nome,
+        db.categoria.nome
+    ]
+    
+    media_mes = db(query).select(
+        *campos,
+        left=[
+            db.palestrante.on(db.media_video.palestrante == db.palestrante.id),
+            db.categoria.on(db.media_video.categoria == db.categoria.id)
+        ],
+        orderby=db.media_video.lancado
+    )
+    
+    # Group media by day
+    dic_media = {}
+    for media in media_mes:
+        dia = media['media_video']['lancado'].day
+        if dia not in dic_media:
+            dic_media[dia] = []
+        dic_media[dia].append(media)
+    
+    # Media type icons
+    tipos_media = [("L","Link"),("V","Video"),("YT","Youtube"),("A","Audio"),("S","Spotify")]
+    dict_tipos_media = {chave: valor for chave, valor in tipos_media}
+    
+    # Approval statuses
+    aprovacoes = [("EP", "EM PROSPECÇÃO"),
+                  ("AT","a Traduzir"),
+                  ("TD","Traduzindo"),
+                  ("RT","Revisando Tradução"),
+                  ("PP","Pronto para publicar"),
+                  ("PB","Publicado"),
+                  ("AC","Arquivado / Catalogado"),
+                  ("RC","Recusado | Somente VDT+"),
+                  ("RT", "Recusado total"),
+                  ("PV", "Perdemos o vídeo"),
+                  ("P","Proposto"),
+                  ("C","Curadoria"),
+                  ("A","Aprovado")]
+    dict_aprovacoes = {chave: valor for chave, valor in aprovacoes}
+    
+    return dict(
+        calend=calend,
+        dic_media=dic_media,
+        year=year,
+        month=month,
+        dict_tipos_media=dict_tipos_media,
+        dict_aprovacoes=dict_aprovacoes
+    )
+
 def postar_wa():
 
     import requests
